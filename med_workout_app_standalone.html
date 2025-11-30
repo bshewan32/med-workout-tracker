@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MED Workout Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-bar { transition: width 0.3s ease-in-out; }
+        details summary::-webkit-details-marker { display: none; }
+        .modal-overlay { backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Exercise library
+        const exerciseLibrary = {
+            // Primary Compounds
+            'Squats': {
+                muscles: { quads: 1, glutes: 0.5, core: 0.25 },
+                category: 'primary',
+                variants: ['Back Squat', 'Front Squat', 'Hack Squat', 'Belt Squat', 'Pendulum Squat', 'Goblet Squat', 'Safety Bar Squat']
+            },
+            'Deadlifts': {
+                muscles: { glutes: 1, hamstrings: 1, upperBack: 0.5, core: 0.5 },
+                category: 'primary',
+                variants: ['Conventional Deadlift', 'Sumo Deadlift', 'Trap Bar Deadlift', 'Romanian Deadlift', 'Deficit Deadlift']
+            },
+            'Bench Press': {
+                muscles: { chest: 1, triceps: 0.5, shoulders: 0.25 },
+                category: 'primary',
+                variants: ['Flat Barbell Bench', 'Incline Bench', 'Decline Bench', 'Dumbbell Press', 'Machine Press', 'Smith Machine Bench']
+            },
+            'Push-ups': {
+                muscles: { chest: 1, triceps: 0.5, core: 0.25 },
+                category: 'primary',
+                variants: ['Push-ups', 'Wide Grip Push-ups', 'Diamond Push-ups', 'Decline Push-ups', 'Incline Push-ups', 'Archer Push-ups']
+            },
+            'Dips': {
+                muscles: { triceps: 1, chest: 0.5, shoulders: 0.25 },
+                category: 'primary',
+                variants: ['Parallel Bar Dips', 'Chest Dips', 'Tricep Dips', 'Assisted Dips', 'Weighted Dips']
+            },
+            'Rows': {
+                muscles: { upperBack: 1, lats: 0.5, biceps: 0.5 },
+                category: 'primary',
+                variants: ['Barbell Row', 'Dumbbell Row', 'Cable Row', 'T-Bar Row', 'Chest-Supported Row', 'Pendlay Row']
+            },
+            'Pull-ups': {
+                muscles: { lats: 1, biceps: 0.5, upperBack: 0.5 },
+                category: 'primary',
+                variants: ['Pull-ups', 'Chin-ups', 'Assisted Pull-ups', 'Lat Pulldown', 'Band-Assisted Pull-ups', 'Neutral Grip']
+            },
+            'Leg Press': {
+                muscles: { quads: 1, glutes: 0.25 },
+                category: 'primary',
+                variants: ['Leg Press', 'Hack Squat Machine', 'Horizontal Leg Press']
+            },
+            'Lunges': {
+                muscles: { quads: 1, glutes: 0.5 },
+                category: 'primary',
+                variants: ['Walking Lunges', 'Reverse Lunges', 'Bulgarian Split Squat', 'Stationary Lunges']
+            },
+            'Hip Thrusts': {
+                muscles: { glutes: 1, hamstrings: 0.25 },
+                category: 'primary',
+                variants: ['Barbell Hip Thrust', 'Dumbbell Hip Thrust', 'Single Leg Hip Thrust', 'Banded Hip Thrust']
+            },
+            'Overhead Press': {
+                muscles: { shoulders: 1, triceps: 0.5, chest: 0.25 },
+                category: 'primary',
+                variants: ['Standing OHP', 'Seated OHP', 'Dumbbell Press', 'Arnold Press', 'Push Press']
+            },
+            
+            // Accessories
+            'Leg Curls': {
+                muscles: { hamstrings: 1 },
+                category: 'accessory',
+                variants: ['Lying Leg Curl', 'Seated Leg Curl', 'Standing Leg Curl', 'Nordic Curls']
+            },
+            'Leg Extensions': {
+                muscles: { quads: 1 },
+                category: 'accessory',
+                variants: ['Leg Extension Machine', 'Single Leg Extension']
+            },
+            'Bicep Curls': {
+                muscles: { biceps: 1 },
+                category: 'accessory',
+                variants: ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Cable Curl', 'Preacher Curl', 'EZ-Bar Curl']
+            },
+            'Tricep Extensions': {
+                muscles: { triceps: 1 },
+                category: 'accessory',
+                variants: ['Overhead Extension', 'Rope Pushdown', 'Skullcrushers', 'Close-Grip Bench', 'Dips', 'Kickbacks']
+            },
+            'Lateral Raises': {
+                muscles: { shoulders: 1 },
+                category: 'accessory',
+                variants: ['Dumbbell Lateral Raise', 'Cable Lateral Raise', 'Machine Lateral Raise']
+            },
+            'Face Pulls': {
+                muscles: { shoulders: 0.5, upperBack: 0.5 },
+                category: 'accessory',
+                variants: ['Cable Face Pull', 'Band Face Pull', 'Rope Face Pull']
+            },
+            'Rear Delt Flyes': {
+                muscles: { shoulders: 1 },
+                category: 'accessory',
+                variants: ['Dumbbell Rear Delt Fly', 'Cable Rear Delt Fly', 'Machine Reverse Fly', 'Bent-Over Rear Delt Raise']
+            },
+            'Chest Flyes': {
+                muscles: { chest: 1 },
+                category: 'accessory',
+                variants: ['Dumbbell Fly', 'Cable Fly', 'Pec Deck Machine', 'Incline Fly', 'Decline Fly']
+            },
+            'Calf Raises': {
+                muscles: { calves: 1 },
+                category: 'accessory',
+                variants: ['Standing Calf Raise', 'Seated Calf Raise', 'Leg Press Calf Raise', 'Single Leg Calf Raise']
+            },
+            'Sit-ups': {
+                muscles: { core: 1 },
+                category: 'accessory',
+                variants: ['Basic Sit-up', 'Weighted Sit-up', 'Decline Sit-up', 'V-Sit']
+            },
+            'Crunches': {
+                muscles: { core: 1 },
+                category: 'accessory',
+                variants: ['Basic Crunch', 'Bicycle Crunch', 'Cable Crunch', 'Reverse Crunch', 'Oblique Crunch']
+            },
+            'Planks': {
+                muscles: { core: 1 },
+                category: 'accessory',
+                variants: ['Front Plank', 'Side Plank', 'RKC Plank', 'Weighted Plank']
+            },
+            'Back Extensions': {
+                muscles: { glutes: 0.5, hamstrings: 0.5, core: 0.5 },
+                category: 'accessory',
+                variants: ['45-Degree Back Extension', 'Horizontal Back Extension', 'Reverse Hyper', 'Weighted Back Extension']
+            },
+            'Shrugs': {
+                muscles: { upperBack: 1 },
+                category: 'accessory',
+                variants: ['Barbell Shrug', 'Dumbbell Shrug', 'Trap Bar Shrug', 'Cable Shrug']
+            }
+        };
+
+        const muscleGroups = {
+            primary: ['chest', 'lats', 'upperBack', 'quads', 'glutes', 'hamstrings'],
+            accessory: ['shoulders', 'biceps', 'triceps', 'calves', 'core']
+        };
+
+        const allMuscles = [...muscleGroups.primary, ...muscleGroups.accessory];
+        const MESOCYCLE_WEEKS = 6;
+
+        const majorLifts = {
+            'Bench Press': ['chest', 'triceps'],
+            'Squats': ['quads', 'glutes'],
+            'Deadlifts': ['glutes', 'hamstrings']
+        };
+
+        // SVG Icons as components
+        const ChevronDown = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>;
+        const ChevronUp = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"></polyline></svg>;
+        const TrendingUp = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>;
+        const Archive = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>;
+        const Settings = ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m-9-9h6m6 0h6"></path></svg>;
+        const AlertCircle = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;
+        const CheckCircle = ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+        const Plus = ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const Minus = ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+
+        const App = () => {
+            const [currentView, setCurrentView] = useState('workout');
+            const [workoutHistory, setWorkoutHistory] = useState(() => {
+                const saved = localStorage.getItem('medApp_workoutHistory');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [lastStrengthWorkout, setLastStrengthWorkout] = useState(() => {
+                const saved = localStorage.getItem('medApp_lastStrengthWorkout');
+                return saved ? JSON.parse(saved) : {};
+            });
+            const [strengthCycleDays, setStrengthCycleDays] = useState(() => {
+                const saved = localStorage.getItem('medApp_strengthCycleDays');
+                return saved ? parseInt(saved) : 14;
+            });
+            const [medTarget, setMedTarget] = useState(() => {
+                const saved = localStorage.getItem('medApp_medTarget');
+                return saved ? parseInt(saved) : 10;
+            });
+            const [expandedExercise, setExpandedExercise] = useState(null);
+            const [selectedVariants, setSelectedVariants] = useState({});
+            const [setSets, setSetSets] = useState({});
+            const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
+            const [showQuickAdd, setShowQuickAdd] = useState(false);
+            const [quickAddExercise, setQuickAddExercise] = useState('');
+            const [quickAddVariant, setQuickAddVariant] = useState('');
+            const [quickAddSets, setQuickAddSets] = useState(3);
+            const [weeklyVolumes, setWeeklyVolumes] = useState([]);
+
+            const getCurrentWeekStart = (date = new Date()) => {
+                const d = new Date(date);
+                const day = d.getDay();
+                const diff = d.getDate() - day;
+                const weekStart = new Date(d.setDate(diff));
+                weekStart.setHours(0, 0, 0, 0);
+                return weekStart;
+            };
+
+            const [mesocycleStart] = useState(() => {
+                const saved = localStorage.getItem('medApp_mesocycleStart');
+                return saved ? new Date(saved) : getCurrentWeekStart();
+            });
+
+            const [currentWeekStart] = useState(() => getCurrentWeekStart());
+
+            // Save to localStorage whenever state changes
+            useEffect(() => {
+                localStorage.setItem('medApp_workoutHistory', JSON.stringify(workoutHistory));
+            }, [workoutHistory]);
+
+            useEffect(() => {
+                localStorage.setItem('medApp_lastStrengthWorkout', JSON.stringify(lastStrengthWorkout));
+            }, [lastStrengthWorkout]);
+
+            useEffect(() => {
+                localStorage.setItem('medApp_strengthCycleDays', strengthCycleDays.toString());
+            }, [strengthCycleDays]);
+
+            useEffect(() => {
+                localStorage.setItem('medApp_medTarget', medTarget.toString());
+            }, [medTarget]);
+
+            useEffect(() => {
+                const initialSets = {};
+                Object.keys(exerciseLibrary).forEach(ex => initialSets[ex] = 3);
+                setSetSets(initialSets);
+                processWeeklyVolumes();
+            }, []);
+
+            const processWeeklyVolumes = () => {
+                const weekMap = new Map();
+                
+                workoutHistory.forEach(workout => {
+                    const workoutDate = new Date(workout.date);
+                    const weekStart = getCurrentWeekStart(workoutDate);
+                    const weekKey = weekStart.toISOString();
+                    
+                    if (!weekMap.has(weekKey)) {
+                        weekMap.set(weekKey, {
+                            weekStart: weekKey,
+                            volumes: {},
+                            workouts: []
+                        });
+                        allMuscles.forEach(m => weekMap.get(weekKey).volumes[m] = 0);
+                    }
+                    
+                    const weekData = weekMap.get(weekKey);
+                    weekData.workouts.push(workout);
+                    
+                    const exercise = exerciseLibrary[workout.exercise];
+                    if (exercise) {
+                        Object.entries(exercise.muscles).forEach(([muscle, multiplier]) => {
+                            if (allMuscles.includes(muscle)) {
+                                weekData.volumes[muscle] += workout.sets * multiplier;
+                            }
+                        });
+                    }
+                });
+                
+                const volumes = Array.from(weekMap.values())
+                    .sort((a, b) => new Date(b.weekStart) - new Date(a.weekStart))
+                    .slice(0, MESOCYCLE_WEEKS);
+                
+                setWeeklyVolumes(volumes);
+            };
+
+            useEffect(() => {
+                processWeeklyVolumes();
+            }, [workoutHistory]);
+
+            const getMesocycleAverage = () => {
+                if (weeklyVolumes.length === 0) {
+                    const empty = {};
+                    allMuscles.forEach(muscle => empty[muscle] = 0);
+                    return empty;
+                }
+
+                const totals = {};
+                allMuscles.forEach(muscle => totals[muscle] = 0);
+
+                weeklyVolumes.forEach(week => {
+                    allMuscles.forEach(muscle => {
+                        totals[muscle] += week.volumes[muscle] || 0;
+                    });
+                });
+
+                const averages = {};
+                allMuscles.forEach(muscle => {
+                    averages[muscle] = totals[muscle] / weeklyVolumes.length;
+                });
+
+                return averages;
+            };
+
+            const getCurrentWeekWorkouts = () => {
+                const weekEnd = new Date(currentWeekStart);
+                weekEnd.setDate(weekEnd.getDate() + 7);
+                
+                return workoutHistory.filter(w => {
+                    const workoutDate = new Date(w.date);
+                    return workoutDate >= currentWeekStart && workoutDate < weekEnd;
+                });
+            };
+
+            const calculateCurrentWeekVolume = () => {
+                const weekVolume = {};
+                allMuscles.forEach(muscle => weekVolume[muscle] = 0);
+                
+                getCurrentWeekWorkouts().forEach(workout => {
+                    const exercise = exerciseLibrary[workout.exercise];
+                    if (exercise) {
+                        Object.entries(exercise.muscles).forEach(([muscle, multiplier]) => {
+                            if (allMuscles.includes(muscle)) {
+                                weekVolume[muscle] += workout.sets * multiplier;
+                            }
+                        });
+                    }
+                });
+                
+                return weekVolume;
+            };
+
+            const getMuscleGroupPriorities = () => {
+                const currentWeekVolume = calculateCurrentWeekVolume();
+                const mesocycleAverage = getMesocycleAverage();
+                
+                return allMuscles.map(muscle => {
+                    const current = currentWeekVolume[muscle] || 0;
+                    const remaining = Math.max(0, medTarget - current);
+                    const percentage = (current / medTarget) * 100;
+                    const isPrimary = muscleGroups.primary.includes(muscle);
+                    const mesocycleAvg = mesocycleAverage[muscle] || 0;
+                    const chronicDeficit = isPrimary && mesocycleAvg < (medTarget * 0.8);
+                    
+                    return {
+                        muscle,
+                        current,
+                        remaining,
+                        percentage,
+                        isPrimary,
+                        mesocycleAvg,
+                        chronicDeficit,
+                        priority: remaining * (isPrimary ? 2 : 1) + (chronicDeficit ? 3 : 0)
+                    };
+                }).sort((a, b) => b.priority - a.priority);
+            };
+
+            const getSmartRecommendations = () => {
+                const priorities = getMuscleGroupPriorities();
+                const topNeeds = priorities.filter(p => p.remaining > 0).slice(0, 5);
+                
+                const recommendations = [];
+                
+                Object.entries(exerciseLibrary).forEach(([exercise, data]) => {
+                    let score = 0;
+                    let targetedMuscles = [];
+                    
+                    topNeeds.forEach(need => {
+                        const muscleScore = data.muscles[need.muscle] || 0;
+                        if (muscleScore > 0) {
+                            const weight = need.remaining * (need.isPrimary ? 3 : 1);
+                            score += muscleScore * weight;
+                            targetedMuscles.push(need.muscle);
+                        }
+                    });
+                    
+                    if (score > 0) {
+                        const primaryMuscle = Object.entries(data.muscles)
+                            .find(([_, s]) => s === 1)?.[0] || 'mixed';
+                        
+                        recommendations.push({
+                            exercise,
+                            score: score.toFixed(1),
+                            targets: targetedMuscles,
+                            primaryMuscle,
+                            category: data.category,
+                            variants: data.variants
+                        });
+                    }
+                });
+                
+                return recommendations.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+            };
+
+            const getStrengthRecommendation = () => {
+                const priorities = getMuscleGroupPriorities();
+                const topPriorities = priorities.filter(p => (p.remaining > 2 || p.chronicDeficit) && p.isPrimary).slice(0, 3);
+                
+                for (const [lift, targetMuscles] of Object.entries(majorLifts)) {
+                    const targetsCurrentPriority = targetMuscles.some(muscle => 
+                        topPriorities.some(priority => priority.muscle === muscle)
+                    );
+                    
+                    const targetsChronicDeficit = targetMuscles.some(muscle =>
+                        topPriorities.some(priority => priority.muscle === muscle && priority.chronicDeficit)
+                    );
+                    
+                    if (targetsCurrentPriority || targetsChronicDeficit) {
+                        const lastDone = lastStrengthWorkout[lift];
+                        const daysSince = lastDone ? 
+                            Math.floor((new Date() - new Date(lastDone)) / (1000 * 60 * 60 * 24)) : 999;
+                        
+                        if (daysSince >= strengthCycleDays) {
+                            return {
+                                lift,
+                                daysSince: daysSince === 999 ? 'Never' : daysSince,
+                                targetMuscles,
+                                chronicTarget: targetsChronicDeficit,
+                                priorityMatch: targetMuscles.filter(muscle => 
+                                    topPriorities.some(priority => priority.muscle === muscle)
+                                )
+                            };
+                        }
+                    }
+                }
+                
+                for (const [lift] of Object.entries(majorLifts)) {
+                    const lastDone = lastStrengthWorkout[lift];
+                    const daysSince = lastDone ? 
+                        Math.floor((new Date() - new Date(lastDone)) / (1000 * 60 * 60 * 24)) : 999;
+                    
+                    if (daysSince >= (strengthCycleDays * 1.5)) {
+                        return { lift, daysSince: daysSince === 999 ? 'Never' : daysSince, overdue: true };
+                    }
+                }
+                
+                return null;
+            };
+
+            const logWorkout = (exercise, variant, sets) => {
+                const newWorkout = {
+                    exercise,
+                    variant,
+                    sets,
+                    date: new Date().toISOString(),
+                    id: Date.now()
+                };
+                
+                setWorkoutHistory(prev => [...prev, newWorkout]);
+                
+                if (Object.keys(majorLifts).includes(exercise)) {
+                    setLastStrengthWorkout(prev => ({
+                        ...prev,
+                        [exercise]: new Date().toISOString()
+                    }));
+                }
+                
+                setExpandedExercise(null);
+            };
+
+            const markStrengthWorkout = (lift) => {
+                setLastStrengthWorkout(prev => ({
+                    ...prev,
+                    [lift]: new Date().toISOString()
+                }));
+            };
+
+            const strengthRec = getStrengthRecommendation();
+            const allRecommendations = getSmartRecommendations();
+            const topRecommendations = allRecommendations.slice(0, 8);
+            const moreRecommendations = allRecommendations.slice(8);
+            const priorities = getMuscleGroupPriorities();
+            const weekNumber = Math.floor((new Date() - currentWeekStart) / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+            const ExerciseCard = ({ rec }) => {
+                const isExpanded = expandedExercise === rec.exercise;
+                const selectedVariant = selectedVariants[rec.exercise] || rec.variants[0];
+                const sets = setSets[rec.exercise] || 3;
+                
+                return (
+                    <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <div 
+                            onClick={() => setExpandedExercise(isExpanded ? null : rec.exercise)}
+                            className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 cursor-pointer hover:from-purple-100 hover:to-purple-150"
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-gray-900">{rec.exercise}</h3>
+                                <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold">
+                                    {rec.score}
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                                <span className="capitalize font-medium">{rec.primaryMuscle}</span>
+                                {rec.category === 'primary' ? ' • Compound' : ' • Accessory'}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                                <p className="text-xs text-gray-500">
+                                    Targets: {rec.targets.join(', ')}
+                                </p>
+                                {isExpanded ? <ChevronUp /> : <ChevronDown />}
+                            </div>
+                        </div>
+                        
+                        {isExpanded && (
+                            <div className="p-4 bg-white border-t-2 border-purple-200">
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2 text-gray-700">Select Variation:</label>
+                                    <select 
+                                        value={selectedVariant}
+                                        onChange={(e) => setSelectedVariants({...selectedVariants, [rec.exercise]: e.target.value})}
+                                        className="w-full p-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                                    >
+                                        {rec.variants.map(variant => (
+                                            <option key={variant} value={variant}>{variant}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-2 text-gray-700">Sets:</label>
+                                    <div className="flex items-center gap-4">
+                                        <button 
+                                            onClick={() => setSetSets({...setSets, [rec.exercise]: Math.max(1, sets - 1)})}
+                                            className="bg-gray-200 p-3 rounded-lg hover:bg-gray-300"
+                                        >
+                                            <Minus />
+                                        </button>
+                                        <span className="text-2xl font-bold min-w-[3rem] text-center">{sets}</span>
+                                        <button 
+                                            onClick={() => setSetSets({...setSets, [rec.exercise]: Math.min(10, sets + 1)})}
+                                            className="bg-gray-200 p-3 rounded-lg hover:bg-gray-300"
+                                        >
+                                            <Plus />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    onClick={() => logWorkout(rec.exercise, selectedVariant, sets)}
+                                    className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle />
+                                    Log {sets} sets of {selectedVariant}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const QuickAddModal = () => {
+                if (!showQuickAdd) return null;
+                
+                const selectedExerciseData = exerciseLibrary[quickAddExercise];
+                const variants = selectedExerciseData?.variants || [];
+                
+                return (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 modal-overlay flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+                            <div className="p-4 border-b-2 border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+                                <h3 className="text-lg font-bold">Quick Add Exercise</h3>
+                                <button 
+                                    onClick={() => {
+                                        setShowQuickAdd(false);
+                                        setQuickAddExercise('');
+                                        setQuickAddVariant('');
+                                        setQuickAddSets(3);
+                                    }}
+                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Exercise:</label>
+                                    <select 
+                                        value={quickAddExercise}
+                                        onChange={(e) => {
+                                            setQuickAddExercise(e.target.value);
+                                            if (e.target.value) {
+                                                setQuickAddVariant(exerciseLibrary[e.target.value].variants[0]);
+                                            }
+                                        }}
+                                        className="w-full p-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    >
+                                        <option value="">Select an exercise...</option>
+                                        <optgroup label="Primary Compounds">
+                                            {Object.entries(exerciseLibrary)
+                                                .filter(([_, data]) => data.category === 'primary')
+                                                .map(([name]) => (
+                                                    <option key={name} value={name}>{name}</option>
+                                                ))
+                                            }
+                                        </optgroup>
+                                        <optgroup label="Accessories">
+                                            {Object.entries(exerciseLibrary)
+                                                .filter(([_, data]) => data.category === 'accessory')
+                                                .map(([name]) => (
+                                                    <option key={name} value={name}>{name}</option>
+                                                ))
+                                            }
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                
+                                {quickAddExercise && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Variation:</label>
+                                        <select 
+                                            value={quickAddVariant}
+                                            onChange={(e) => setQuickAddVariant(e.target.value)}
+                                            className="w-full p-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                        >
+                                            {variants.map(variant => (
+                                                <option key={variant} value={variant}>{variant}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                
+                                {quickAddExercise && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Sets:</label>
+                                        <div className="flex items-center gap-4 justify-center">
+                                            <button 
+                                                onClick={() => setQuickAddSets(Math.max(1, quickAddSets - 1))}
+                                                className="bg-gray-200 p-3 rounded-lg hover:bg-gray-300"
+                                            >
+                                                <Minus />
+                                            </button>
+                                            <span className="text-2xl font-bold min-w-[3rem] text-center">{quickAddSets}</span>
+                                            <button 
+                                                onClick={() => setQuickAddSets(Math.min(10, quickAddSets + 1))}
+                                                className="bg-gray-200 p-3 rounded-lg hover:bg-gray-300"
+                                            >
+                                                <Plus />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {quickAddExercise && (
+                                    <button 
+                                        onClick={() => {
+                                            logWorkout(quickAddExercise, quickAddVariant, quickAddSets);
+                                            setShowQuickAdd(false);
+                                            setQuickAddExercise('');
+                                            setQuickAddVariant('');
+                                            setQuickAddSets(3);
+                                        }}
+                                        className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle />
+                                        Log {quickAddSets} sets of {quickAddVariant}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Main views
+            const WorkoutView = () => (
+                <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-lg shadow-lg">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h1 className="text-2xl font-bold">Today's Workout</h1>
+                                <p className="text-blue-100 text-sm">Week {weekNumber} of Mesocycle</p>
+                            </div>
+                            <button onClick={() => setCurrentView('settings')} className="p-2 hover:bg-blue-500 rounded-full">
+                                <Settings />
+                            </button>
+                        </div>
+                    </div>
+
+                    {strengthRec && (
+                        <div className="bg-orange-50 border-2 border-orange-400 rounded-lg p-4 shadow-md">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="text-orange-600 mt-1 flex-shrink-0" />
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-orange-900 mb-1">
+                                        {strengthRec.overdue ? '⚠️ OVERDUE' : '💪 STRENGTH FOCUS'}
+                                    </h3>
+                                    {strengthRec.overdue ? (
+                                        <p className="text-orange-800 text-sm mb-3">
+                                            <strong>{strengthRec.lift}</strong> - {strengthRec.daysSince} days since last strength session
+                                        </p>
+                                    ) : strengthRec.chronicTarget ? (
+                                        <div className="text-orange-800 text-sm mb-3">
+                                            <p className="mb-1">
+                                                <strong>{strengthRec.lift}</strong> targets chronically undertrained: <strong>{strengthRec.priorityMatch.join(', ')}</strong>
+                                            </p>
+                                            <p className="text-xs">Last session: {strengthRec.daysSince} days ago</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-orange-800 text-sm mb-3">
+                                            <strong>{strengthRec.lift}</strong> targets: {strengthRec.priorityMatch.join(', ')} 
+                                            <br />Last session: {strengthRec.daysSince} days ago
+                                        </p>
+                                    )}
+                                    <button 
+                                        onClick={() => markStrengthWorkout(strengthRec.lift)}
+                                        className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 w-full"
+                                    >
+                                        Mark {strengthRec.lift} Complete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white rounded-lg shadow-md p-4">
+                        <h2 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
+                            <TrendingUp size={20} />
+                            Smart Recommendations
+                        </h2>
+                        
+                        <div className="space-y-3">
+                            {topRecommendations.map(rec => (
+                                <ExerciseCard key={rec.exercise} rec={rec} />
+                            ))}
+                        </div>
+                        
+                        {moreRecommendations.length > 0 && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setShowMoreRecommendations(!showMoreRecommendations)}
+                                    className="w-full p-3 border-2 border-purple-200 rounded-lg text-purple-700 font-medium hover:bg-purple-50 flex items-center justify-center gap-2"
+                                >
+                                    {showMoreRecommendations ? (
+                                        <>
+                                            <ChevronUp />
+                                            Hide Additional Exercises
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ChevronDown />
+                                            Show More Exercises ({moreRecommendations.length})
+                                        </>
+                                    )}
+                                </button>
+                                
+                                {showMoreRecommendations && (
+                                    <div className="space-y-3 mt-3">
+                                        {moreRecommendations.map(rec => (
+                                            <ExerciseCard key={rec.exercise} rec={rec} />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        <button
+                            onClick={() => setShowQuickAdd(true)}
+                            className="w-full mt-4 p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
+                        >
+                            <Plus />
+                            Quick Add Exercise
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-md p-4">
+                        <h3 className="font-bold text-gray-900 mb-3">This Week's Progress</h3>
+                        <div className="space-y-3">
+                            {priorities.filter(p => p.isPrimary).map(p => (
+                                <div key={p.muscle} className="space-y-1">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-medium capitalize">{p.muscle}</span>
+                                        <span className={`${p.current >= medTarget ? 'text-green-600 font-semibold' : 'text-gray-600'}`}>
+                                            {p.current.toFixed(1)}/{medTarget}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div
+                                            className={`progress-bar h-2.5 rounded-full ${
+                                                p.percentage >= 100 ? 'bg-green-500' : 
+                                                p.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                                            }`}
+                                            style={{ width: `${Math.min(p.percentage, 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const ArchiveView = () => {
+                const currentWeekWorkouts = getCurrentWeekWorkouts();
+                
+                return (
+                    <div className="space-y-4">
+                        <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white p-6 rounded-lg shadow-lg">
+                            <h1 className="text-2xl font-bold mb-2">Workout Archive</h1>
+                            <p className="text-gray-100 text-sm">
+                                {workoutHistory.length} total workout{workoutHistory.length === 1 ? '' : 's'} logged
+                            </p>
+                        </div>
+
+                        {currentWeekWorkouts.length > 0 && (
+                            <div className="bg-white rounded-lg shadow-md p-4">
+                                <h2 className="text-lg font-bold text-gray-900 mb-3">This Week</h2>
+                                <div className="space-y-2">
+                                    {currentWeekWorkouts.slice().reverse().map(workout => {
+                                        const workoutDate = new Date(workout.date);
+                                        const isToday = workoutDate.toDateString() === new Date().toDateString();
+                                        
+                                        return (
+                                            <div key={workout.id} className={`p-3 rounded-lg border-2 ${
+                                                isToday ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
+                                            }`}>
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <div>
+                                                        <div className="font-bold text-gray-900">{workout.exercise}</div>
+                                                        <div className="text-sm text-gray-600">{workout.variant}</div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-blue-600">{workout.sets} sets</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {isToday ? 'Today' : workoutDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {workoutDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {weeklyVolumes.length > 0 && weeklyVolumes.filter(w => w.weekStart !== currentWeekStart.toISOString()).length > 0 && (
+                            <div className="bg-white rounded-lg shadow-md p-4">
+                                <h2 className="text-lg font-bold text-gray-900 mb-3">Previous Weeks</h2>
+                                
+                                <div className="space-y-3">
+                                    {weeklyVolumes
+                                        .filter(w => w.weekStart !== currentWeekStart.toISOString())
+                                        .map(week => {
+                                            const weekDate = new Date(week.weekStart);
+                                            const weekWorkouts = workoutHistory.filter(wo => {
+                                                const woDate = new Date(wo.date);
+                                                const weekEnd = new Date(weekDate);
+                                                weekEnd.setDate(weekEnd.getDate() + 7);
+                                                return woDate >= weekDate && woDate < weekEnd;
+                                            });
+                                            
+                                            const totalSets = weekWorkouts.reduce((sum, wo) => sum + wo.sets, 0);
+                                            const musclesHit = muscleGroups.primary.filter(m => 
+                                                week.volumes[m] >= medTarget
+                                            ).length;
+                                            
+                                            return (
+                                                <details key={week.weekStart} className="group">
+                                                    <summary className="p-3 bg-gray-50 rounded-lg border-2 border-gray-200 cursor-pointer hover:bg-gray-100 list-none">
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <div className="font-bold text-gray-800">
+                                                                    Week of {weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                                </div>
+                                                                <div className="text-sm text-gray-600">
+                                                                    {weekWorkouts.length} workout{weekWorkouts.length === 1 ? '' : 's'} • {totalSets} total sets
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-sm font-medium text-green-600">
+                                                                    {musclesHit}/6 muscle groups hit MED
+                                                                </div>
+                                                                <div className="text-xs text-gray-500">▼</div>
+                                                            </div>
+                                                        </div>
+                                                    </summary>
+                                                    
+                                                    <div className="mt-2 space-y-2 pl-3">
+                                                        {weekWorkouts.slice().reverse().map(workout => {
+                                                            const workoutDate = new Date(workout.date);
+                                                            
+                                                            return (
+                                                                <div key={workout.id} className="p-3 bg-white rounded-lg border border-gray-200">
+                                                                    <div className="flex justify-between items-start mb-1">
+                                                                        <div>
+                                                                            <div className="font-medium text-gray-900">{workout.exercise}</div>
+                                                                            <div className="text-sm text-gray-600">{workout.variant}</div>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <div className="font-bold text-gray-700">{workout.sets} sets</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        {workoutDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} • 
+                                                                        {' '}{workoutDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </details>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                        )}
+
+                        {workoutHistory.length > 0 && (
+                            <div className="bg-white rounded-lg shadow-md p-4">
+                                <h2 className="text-lg font-bold text-gray-900 mb-3">All-Time Stats</h2>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                        <div className="text-3xl font-bold text-blue-600">
+                                            {workoutHistory.length}
+                                        </div>
+                                        <div className="text-sm text-gray-600">Total Workouts</div>
+                                    </div>
+                                    
+                                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                                        <div className="text-3xl font-bold text-green-600">
+                                            {workoutHistory.reduce((sum, w) => sum + w.sets, 0)}
+                                        </div>
+                                        <div className="text-sm text-gray-600">Total Sets</div>
+                                    </div>
+                                    
+                                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                        <div className="text-3xl font-bold text-purple-600">
+                                            {weeklyVolumes.length}
+                                        </div>
+                                        <div className="text-sm text-gray-600">Weeks Tracked</div>
+                                    </div>
+                                    
+                                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                                        <div className="text-3xl font-bold text-orange-600">
+                                            {new Set(workoutHistory.map(w => w.exercise)).size}
+                                        </div>
+                                        <div className="text-sm text-gray-600">Different Exercises</div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <h3 className="font-medium text-gray-700 mb-2">Most Frequent Exercises</h3>
+                                    <div className="space-y-1">
+                                        {Object.entries(
+                                            workoutHistory.reduce((acc, w) => {
+                                                acc[w.exercise] = (acc[w.exercise] || 0) + 1;
+                                                return acc;
+                                            }, {})
+                                        )
+                                            .sort(([, a], [, b]) => b - a)
+                                            .slice(0, 5)
+                                            .map(([exercise, count]) => (
+                                                <div key={exercise} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                                                    <span className="text-gray-700">{exercise}</span>
+                                                    <span className="font-medium text-gray-900">{count}x</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {workoutHistory.length === 0 && (
+                            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                                <div className="text-gray-400 mb-3 flex justify-center">
+                                    <Archive size={48} />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-700 mb-2">No Workouts Yet</h3>
+                                <p className="text-gray-600 text-sm mb-4">
+                                    Start logging workouts to build your training archive.
+                                </p>
+                                <button
+                                    onClick={() => setCurrentView('workout')}
+                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
+                                >
+                                    Log Your First Workout
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const TrendsView = () => (
+                <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-6 rounded-lg shadow-lg">
+                        <h1 className="text-2xl font-bold mb-2">Mesocycle Trends</h1>
+                        <p className="text-indigo-100 text-sm">
+                            {weeklyVolumes.length} weeks of data • Week {weekNumber} current
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-md p-4">
+                        <h2 className="text-lg font-bold text-indigo-900 mb-1">6-Week Averages</h2>
+                        <p className="text-xs text-gray-500 mb-3">
+                            Primary muscles: chronic deficit = &lt; {(medTarget * 0.8).toFixed(0)} sets/week
+                        </p>
+                        
+                        <h3 className="text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Primary Compounds</h3>
+                        <div className="space-y-3 mb-4">
+                            {priorities.filter(p => p.isPrimary).map(p => {
+                                const avg = p.mesocycleAvg;
+                                const percentage = (avg / medTarget) * 100;
+                                
+                                return (
+                                    <div key={p.muscle} className={`p-3 rounded-lg border-2 ${
+                                        p.chronicDeficit ? 'bg-red-50 border-red-300' : 'bg-gray-50 border-gray-200'
+                                    }`}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className={`font-bold capitalize ${p.chronicDeficit ? 'text-red-700' : 'text-gray-800'}`}>
+                                                {p.muscle}
+                                                {p.chronicDeficit && ' ⚠️'}
+                                            </span>
+                                            <span className={`text-lg font-bold ${
+                                                p.chronicDeficit ? 'text-red-600' :
+                                                avg >= medTarget ? 'text-green-600' : 'text-yellow-600'
+                                            }`}>
+                                                {avg.toFixed(1)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                            <div
+                                                className={`progress-bar h-2 rounded-full ${
+                                                    p.chronicDeficit ? 'bg-red-500' :
+                                                    percentage >= 100 ? 'bg-green-500' : 
+                                                    percentage >= 80 ? 'bg-yellow-500' : 'bg-orange-500'
+                                                }`}
+                                                style={{ width: `${Math.min(percentage, 100)}%` }}
+                                            />
+                                        </div>
+                                        
+                                        <div className="flex justify-between text-xs text-gray-600">
+                                            <span>avg sets/week</span>
+                                            <span>{percentage.toFixed(0)}% of MED target</span>
+                                        </div>
+                                        
+                                        {p.chronicDeficit && (
+                                            <div className="mt-2 text-xs text-red-700 font-medium">
+                                                CHRONIC DEFICIT - Prioritize this muscle group!
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <h3 className="text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Accessories</h3>
+                        <div className="space-y-3">
+                            {priorities.filter(p => !p.isPrimary).map(p => {
+                                const avg = p.mesocycleAvg;
+                                const percentage = (avg / medTarget) * 100;
+                                
+                                return (
+                                    <div key={p.muscle} className="p-3 rounded-lg border-2 bg-blue-50 border-blue-200">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="font-bold capitalize text-blue-800">
+                                                {p.muscle}
+                                            </span>
+                                            <span className={`text-lg font-bold ${
+                                                avg >= medTarget ? 'text-green-600' : 
+                                                avg >= 3 ? 'text-blue-600' : 'text-gray-500'
+                                            }`}>
+                                                {avg.toFixed(1)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+                                            <div
+                                                className={`progress-bar h-2 rounded-full ${
+                                                    percentage >= 100 ? 'bg-green-500' : 
+                                                    percentage >= 60 ? 'bg-blue-500' : 'bg-gray-400'
+                                                }`}
+                                                style={{ width: `${Math.min(percentage, 100)}%` }}
+                                            />
+                                        </div>
+                                        
+                                        <div className="flex justify-between text-xs text-blue-700">
+                                            <span>avg sets/week</span>
+                                            <span>{percentage.toFixed(0)}% of MED target</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {weeklyVolumes.length > 0 && (
+                        <div className="bg-white rounded-lg shadow-md p-4">
+                            <h2 className="text-lg font-bold text-indigo-900 mb-3">Week-by-Week History</h2>
+                            
+                            <div className="space-y-3">
+                                {weeklyVolumes.map((week, index) => {
+                                    const weekDate = new Date(week.weekStart);
+                                    const isCurrentWeek = weekDate.getTime() === currentWeekStart.getTime();
+                                    const weeksAgo = weeklyVolumes.length - index - 1;
+                                    
+                                    return (
+                                        <div key={week.weekStart} className={`p-3 rounded-lg border-2 ${
+                                            isCurrentWeek ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'
+                                        }`}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <div>
+                                                    <div className="font-bold text-gray-800">
+                                                        {isCurrentWeek ? 'Current Week' : `${weeksAgo} week${weeksAgo === 1 ? '' : 's'} ago`}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {weekDate.toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    {week.workouts.length} workout{week.workouts.length === 1 ? '' : 's'}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {allMuscles.map(muscle => {
+                                                    const volume = week.volumes[muscle] || 0;
+                                                    const metTarget = volume >= medTarget;
+                                                    const isPrimary = muscleGroups.primary.includes(muscle);
+                                                    
+                                                    return (
+                                                        <div key={muscle} className={`flex justify-between items-center text-sm p-2 rounded ${
+                                                            isPrimary ? 'bg-white' : 'bg-blue-50'
+                                                        }`}>
+                                                            <span className="capitalize text-gray-700 text-xs">{muscle}</span>
+                                                            <span className={`font-bold text-sm ${metTarget ? 'text-green-600' : 'text-gray-500'}`}>
+                                                                {volume.toFixed(1)}
+                                                                {metTarget && ' ✓'}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {weeklyVolumes.length === 0 && (
+                        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                            <div className="text-gray-400 mb-3 flex justify-center">
+                                <TrendingUp size={48} />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-700 mb-2">No Trend Data Yet</h3>
+                            <p className="text-gray-600 text-sm">
+                                Start logging workouts to see your mesocycle trends and identify chronic deficits.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            );
+
+            const SettingsView = () => (
+                <div className="space-y-4">
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                        <h2 className="text-xl font-bold mb-6">Settings</h2>
+                        
+                        <div className="space-y-8">
+                            <div>
+                                <label className="block font-medium mb-2 text-lg">Weekly Volume Target (MED)</label>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Minimum Effective Dose - sets per muscle group per week
+                                </p>
+                                <div className="space-y-3">
+                                    {[
+                                        { 
+                                            sets: 5, 
+                                            label: 'Maintenance', 
+                                            desc: '5 sets/week - Maintain muscle, minimal time',
+                                            research: 'Suitable for busy schedules or deload phases',
+                                            rir: 'RIR 0-1 (train HARD - low volume requires high intensity)'
+                                        },
+                                        { 
+                                            sets: 10, 
+                                            label: 'Growth', 
+                                            desc: '10 sets/week - Optimal for most people',
+                                            research: 'Research-backed "sweet spot" for hypertrophy',
+                                            rir: 'RIR 1-2 (moderate to high intensity)'
+                                        },
+                                        { 
+                                            sets: 15, 
+                                            label: 'Advanced', 
+                                            desc: '15 sets/week - Maximum adaptive volume',
+                                            research: 'For advanced lifters seeking maximum gains',
+                                            rir: 'RIR 2-3 (submaximal - high volume allows moderate intensity)'
+                                        }
+                                    ].map(option => (
+                                        <button
+                                            key={option.sets}
+                                            onClick={() => setMedTarget(option.sets)}
+                                            className={`w-full text-left p-4 rounded-lg border-2 ${
+                                                medTarget === option.sets 
+                                                    ? 'border-green-600 bg-green-50' 
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="font-medium text-lg">{option.label}</div>
+                                                <div className="font-bold text-green-600">{option.sets} sets</div>
+                                            </div>
+                                            <div className="text-sm text-gray-700 mb-1">{option.desc}</div>
+                                            <div className="text-xs text-gray-500 italic mb-1">{option.research}</div>
+                                            <div className="text-xs text-green-700 font-medium bg-green-100 px-2 py-1 rounded mt-2">
+                                                💪 {option.rir}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-xs text-blue-800">
+                                        <strong>Based on research:</strong> Lower volumes require higher intensity to maximize gains 
+                                        (Schoenfeld et al., 2021). With higher volumes (15+ sets), moderate intensity (RIR 2-3) is 
+                                        sufficient and more sustainable for recovery (Helms et al., 2018).
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block font-medium mb-2 text-lg">Strength Cycle Duration</label>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    How often should you do focused strength work on major lifts?
+                                </p>
+                                <div className="space-y-3">
+                                    {[
+                                        { 
+                                            days: 7, 
+                                            label: 'Frequent', 
+                                            desc: 'Every 7 days - For powerlifters',
+                                            research: 'High skill practice frequency'
+                                        },
+                                        { 
+                                            days: 14, 
+                                            label: 'Balanced', 
+                                            desc: 'Every 14 days - Recommended for most',
+                                            research: 'Balances recovery with motor pattern retention'
+                                        },
+                                        { 
+                                            days: 21, 
+                                            label: 'Maintenance', 
+                                            desc: 'Every 21 days - Volume-focused training',
+                                            research: 'Maintain strength while prioritizing hypertrophy'
+                                        }
+                                    ].map(option => (
+                                        <button
+                                            key={option.days}
+                                            onClick={() => setStrengthCycleDays(option.days)}
+                                            className={`w-full text-left p-4 rounded-lg border-2 ${
+                                                strengthCycleDays === option.days 
+                                                    ? 'border-blue-600 bg-blue-50' 
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="font-medium text-lg">{option.label}</div>
+                                                <div className="font-bold text-blue-600">{option.days} days</div>
+                                            </div>
+                                            <div className="text-sm text-gray-700 mb-1">{option.desc}</div>
+                                            <div className="text-xs text-gray-500 italic">{option.research}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-xs text-blue-800">
+                                        <strong>Based on research:</strong> Motor patterns benefit from practice every 7-14 days 
+                                        (Schmidt & Lee, 2011). Beyond 21 days, neural efficiency may decline.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            onClick={() => setCurrentView('workout')}
+                            className="w-full mt-8 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700"
+                        >
+                            Save & Return to Workout
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const BottomNav = () => (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 flex justify-around shadow-lg max-w-2xl mx-auto">
+                    <button 
+                        onClick={() => setCurrentView('workout')}
+                        className={`flex flex-col items-center ${currentView === 'workout' ? 'text-blue-600' : 'text-gray-400'}`}
+                    >
+                        <TrendingUp />
+                        <span className="text-xs mt-1">Workout</span>
+                    </button>
+                    <button 
+                        onClick={() => setCurrentView('archive')}
+                        className={`flex flex-col items-center ${currentView === 'archive' ? 'text-blue-600' : 'text-gray-400'}`}
+                    >
+                        <Archive />
+                        <span className="text-xs mt-1">Archive</span>
+                    </button>
+                    <button 
+                        onClick={() => setCurrentView('trends')}
+                        className={`flex flex-col items-center ${currentView === 'trends' ? 'text-blue-600' : 'text-gray-400'}`}
+                    >
+                        <TrendingUp />
+                        <span className="text-xs mt-1">Trends</span>
+                    </button>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-gray-100 pb-20">
+                    <div className="max-w-2xl mx-auto p-4">
+                        {currentView === 'workout' && <WorkoutView />}
+                        {currentView === 'settings' && <SettingsView />}
+                        {currentView === 'archive' && <ArchiveView />}
+                        {currentView === 'trends' && <TrendsView />}
+                    </div>
+                    <BottomNav />
+                    <QuickAddModal />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
