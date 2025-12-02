@@ -669,14 +669,36 @@ const App = () => {
     }));
   };
 
-  const priorities = getMuscleGroupPriorities();
-  const strengthRec = getStrengthRecommendation();
-  const allRecommendations = getSmartRecommendations();
-  const topRecommendations = allRecommendations.slice(0, 8);
-  const moreRecommendations = allRecommendations.slice(8);
-  const weekNumber = Math.floor(
-    (new Date() - currentWeekStart) / (1000 * 60 * 60 * 24 * 7)
-  ) + 1;
+const priorities = getMuscleGroupPriorities();
+const strengthRec = getStrengthRecommendation();
+const allRecommendations = getSmartRecommendations();
+const weekNumber = Math.floor(
+  (new Date() - currentWeekStart) / (1000 * 60 * 60 * 24 * 7)
+) + 1;
+
+// NEW: group recs by the muscles that actually need work
+const deficitMuscles = priorities
+  .filter(p => p.remaining > 0)   // only muscles under MED
+  .slice(0, 4);                   // cap to top 3–4 groups for the UI
+
+const groupedRecommendations = deficitMuscles
+  .map(musclePriority => {
+    const recsForMuscle = allRecommendations
+      .filter(r => r.primaryMuscle === musclePriority.muscle)
+      .slice(0, 3); // top 2–3 options for that muscle
+
+    return {
+      muscle: musclePriority.muscle,
+      priority: musclePriority,
+      recs: recsForMuscle
+    };
+  })
+  .filter(group => group.recs.length > 0);
+
+// Fallback flat list if you still want it elsewhere (optional)
+const topRecommendations = allRecommendations.slice(0, 8);
+const moreRecommendations = allRecommendations.slice(8);
+
 
   const handleAnchorSelect = (exercise) => {
     setAnchorExercise(exercise);
@@ -1051,58 +1073,95 @@ const App = () => {
         )}
       </div>
 
-      {/* Smart recommendations */}
-      <div className="bg-white rounded-lg shadow-md p-4">
-        <h2 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
-          <TrendingUp size={20} />
-          Smart Recommendations
-        </h2>
+      {/* Smart recommendations (grouped by muscle) */}
+<div className="bg-white rounded-lg shadow-md p-4">
+  <h2 className="text-lg font-bold text-purple-900 mb-1 flex items-center gap-2">
+    <TrendingUp size={20} />
+    Smart Recommendations
+  </h2>
+  <p className="text-xs text-gray-500 mb-3">
+    Prioritized by which muscles are still under your MED target this week.
+  </p>
 
-        <div className="space-y-3">
-          {topRecommendations.map(rec => (
+  {groupedRecommendations.length === 0 && (
+    <p className="text-xs text-gray-500">
+      You’re at or above MED for all tracked muscles this week. Use Quick Add
+      if you want some bonus work, or just call it a day.
+    </p>
+  )}
+
+  <div className="space-y-4">
+    {groupedRecommendations.map(group => (
+      <div
+        key={group.muscle}
+        className="border border-purple-100 rounded-lg p-3 bg-purple-50/60"
+      >
+        {/* Muscle header with little MED bar */}
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <div className="capitalize text-sm font-semibold text-purple-900">
+              {group.muscle}
+            </div>
+            <div className="text-[11px] text-purple-700">
+              {group.priority.currentVolume.toFixed(1)}/{group.priority.med} sets ·{' '}
+              {group.priority.percentage}%
+            </div>
+          </div>
+          <div className="w-20 h-1.5 bg-purple-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-purple-500"
+              style={{ width: `${Math.min(group.priority.percentage, 130)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {group.recs.map(rec => (
             <ExerciseCard key={rec.exercise} rec={rec} />
           ))}
         </div>
-
-        {moreRecommendations.length > 0 && (
-          <div className="mt-4">
-            <button
-              onClick={() =>
-                setShowMoreRecommendations(!showMoreRecommendations)
-              }
-              className="w-full p-3 border border-purple-200 rounded-lg text-purple-800 font-medium hover:bg-purple-50 flex items-center justify-center gap-2"
-            >
-              {showMoreRecommendations ? (
-                <>
-                  <ChevronUp />
-                  Hide Additional Exercises
-                </>
-              ) : (
-                <>
-                  <ChevronDown />
-                  Show More Exercises ({moreRecommendations.length})
-                </>
-              )}
-            </button>
-
-            {showMoreRecommendations && (
-              <div className="mt-3 space-y-3">
-                {moreRecommendations.map(rec => (
-                  <ExerciseCard key={rec.exercise} rec={rec} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        <button
-          onClick={() => setShowQuickAdd(true)}
-          className="w-full mt-4 p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
-        >
-          <Plus />
-          Quick Add Exercise
-        </button>
       </div>
+    ))}
+  </div>
+
+  {moreRecommendations.length > 0 && (
+    <div className="mt-4">
+      <button
+        onClick={() => setShowMoreRecommendations(!showMoreRecommendations)}
+        className="w-full p-3 border border-purple-200 rounded-lg text-purple-800 font-medium hover:bg-purple-50 flex items-center justify-center gap-2"
+      >
+        {showMoreRecommendations ? (
+          <>
+            <ChevronUp />
+            Show Less
+          </>
+        ) : (
+          <>
+            <ChevronDown />
+            Show All Exercises ({moreRecommendations.length + topRecommendations.length})
+          </>
+        )}
+      </button>
+
+      {showMoreRecommendations && (
+        <div className="mt-3 space-y-3">
+          {allRecommendations.map(rec => (
+            <ExerciseCard key={rec.exercise} rec={rec} />
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+
+  <button
+    onClick={() => setShowQuickAdd(true)}
+    className="w-full mt-4 p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
+  >
+    <Plus />
+    Quick Add Exercise
+  </button>
+</div>
+
 
       {/* Weekly progress */}
       <div className="bg-white rounded-lg shadow-md p-4">
@@ -1568,4 +1627,5 @@ root.render(<App />);
    
 </body>
 </html>
+
 
