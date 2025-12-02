@@ -723,10 +723,29 @@ const moreRecommendations = allRecommendations.slice(8);
   const tierSession = sessionPlan;
 
   const ExerciseCard = ({ rec }) => {
-    const isExpanded = expandedExercise === rec.exercise;
-    const selectedVariant = selectedVariants[rec.exercise] || rec.variants[0];
-    const sets = setSets[rec.exercise] || 3;
-    const isAnchor = sessionPlan && sessionPlan.anchor === rec.exercise;
+  const [isLogging, setIsLogging] = useState(false);
+  const [lastLoggedSets, setLastLoggedSets] = useState(null);
+
+  const isExpanded = expandedExercise === rec.exercise;
+  const selectedVariant = selectedVariants[rec.exercise] || rec.variants[0];
+  const sets = setSets[rec.exercise] || 3;
+  const isAnchor = sessionPlan && sessionPlan.anchor === rec.exercise;
+
+  const handleLogClick = () => {
+    // actually log the work
+    logWorkout(rec.exercise, selectedVariant, sets);
+
+    // feedback + prevent double-click spam
+    setIsLogging(true);
+    setLastLoggedSets(sets);
+
+    // optional: auto-collapse the card so it's clear you're done with it
+    setExpandedExercise(null);
+
+    // brief "Logged ✓" state
+    setTimeout(() => setIsLogging(false), 400);
+  };
+
 
     return (
       <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
@@ -822,11 +841,24 @@ const moreRecommendations = allRecommendations.slice(8);
             </button>
 
             <button
-              onClick={() => logWorkout(rec.exercise, selectedVariant, sets)}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700"
-            >
-              Log This Exercise
-            </button>
+  onClick={handleLogClick}
+  disabled={isLogging}
+  className={
+    "w-full py-3 rounded-lg font-bold transition " +
+    (isLogging
+      ? "bg-green-600 text-white opacity-80 cursor-default"
+      : "bg-green-600 text-white hover:bg-green-700")
+  }
+>
+  {isLogging ? "Logged ✓" : "Log This Exercise"}
+</button>
+
+{lastLoggedSets && (
+  <p className="mt-1 text-[11px] text-green-600">
+    Logged {lastLoggedSets} sets.
+  </p>
+)}
+
           </div>
         )}
       </div>
@@ -1627,5 +1659,6 @@ root.render(<App />);
    
 </body>
 </html>
+
 
 
