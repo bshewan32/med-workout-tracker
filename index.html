@@ -145,12 +145,28 @@ const exerciseLibrary = {
   }
 };
 
-const muscleGroups = {
-  primary: ['chest', 'lats', 'upperBack', 'quads', 'glutes', 'hamstrings'],
-  accessory: ['shoulders', 'biceps', 'triceps', 'calves', 'core']
+// Only these muscles are tracked for MED / Smart Recommendations
+const trackedMuscles = ['chest', 'lats', 'upperBack', 'quads', 'glutes', 'hamstrings'];
+
+// These are accessory-only: they won't drive MED or Smart Recs
+const accessoryOnlyMuscles = ['shoulders', 'biceps', 'triceps', 'calves', 'core'];
+
+// For the rest of the code, "allMuscles" means "all tracked systemic muscles"
+const allMuscles = trackedMuscles;
+
+// Systemic priority – quads/glutes/hams are slightly more important
+const primarySystemicMuscles = ['quads', 'glutes', 'hamstrings'];
+
+// Relative importance weights for MED-based priority
+const musclePriorityWeights = {
+  chest: 0.9,
+  lats: 0.9,
+  upperBack: 0.9,
+  quads: 1.0,
+  glutes: 1.0,
+  hamstrings: 1.0
 };
 
-const allMuscles = [...muscleGroups.primary, ...muscleGroups.accessory];
 const MESOCYCLE_WEEKS = 6;
 
 const majorLifts = {
@@ -533,76 +549,112 @@ const App = () => {
     return weekVolume;
   };
 
-  const getMuscleGroupPriorities = () => {
-    const currentWeekVolume = calculateCurrentWeekVolume();
-    const medTargets = {};
-    allMuscles.forEach(muscle => medTargets[muscle] = medTarget);
+ const getMuscleGroupPriorities = () => {
+  const currentWeekVolume = calculateCurrentWeekVolume();
 
-    const priorities = allMuscles.map(muscle => {
-      const currentVolume = currentWeekVolume[muscle] || 0;
-      const med = medTargets[muscle];
-      const remaining = Math.max(0, med - currentVolume);
+  // MED targets only apply to the tracked systemic muscles
+  const medTargets = {};
+  allMuscles.forEach(muscle => {
+    medTargets[muscle] = medTarget;
+  });
 
-      const mesocycleVolume = weeklyVolumes.reduce((sum, week) => {
-        return sum + (week.volume[muscle] || 0);
-      }, 0);
+  const priorities = allMuscles.map(muscle => {
+    const currentVolume = currentWeekVolume[muscle] || 0;
+    const med = medTargets[muscle];
+    const remaining = Math.max(0, med - currentVolume);
 
-      const mesocycleAvg = weeklyVolumes.length > 0 ?
-        mesocycleVolume / weeklyVolumes.length :
-        currentVolume;
+    const mesocycleVolume = weeklyVolumes.reduce((sum, week) => {
+      return sum + (week.volume[muscle] || 0);
+    }, 0);
 
-      const chronicDeficit = mesocycleAvg < med * 0.7;
-      const isPrimary = muscleGroups.primary.includes(muscle);
+    const mesocycleAvg = weeklyVolumes.length > 0
+      ? mesocycleVolume / weeklyVolumes.length
+      : currentVolume;
 
-      return {
-        muscle,
-        currentVolume,
-        med,
-        remaining,
-        percentage: med > 0 ? Math.round((currentVolume / med) * 100) : 0,
-        isPrimary,
-        mesocycleAvg,
-        chronicDeficit,
-        priority: remaining * (isPrimary ? 2 : 1) + (chronicDeficit ? 3 : 0)
-      };
-    });
+    const chronicDeficit = mesocycleAvg < med * 0.7;
 
-    return priorities.sort((a, b) => b.priority - a.priority);
-  };
+    const isPrimarySystemic = primarySystemicMuscles.includes(muscle);
+    const weight = musclePriorityWeights[muscle] || 0.5;
+
+    // Higher weight + primary systemic muscles get emphasised a bit
+    const priorityScore =
+      remaining * weight * (isPrimarySystemic ? 2 : 1) +
+      (chronicDeficit ? 3 * weight : 0);
+
+    return {
+      muscle,
+      currentVolume,
+      med,
+      remaining,
+      percentage: med > 0 ? Math.round((currentVolume / med) * 100) : 0,
+      isPrimary: isPrimarySystemic,
+      mesocycleAvg,
+      chronicDeficit,
+      priority: priorityScore
+    };
+  });
+
+  // Highest priority first
+  return priorities.sort((a, b) => b.priority - a.priority);
+};
+
 
   const getSmartRecommendations = () => {
-    const priorities = getMuscleGroupPriorities();
-    const topNeeds = priorities.filter(p => p.remaining > 0).slice(0, 5);
+  const priorities = getMuscleGroupPriorities();
+  const topNeeds = priorities
+    .filter(p => p.remaining > 0)  // only muscles under MED drive scores
+    .slice(0, 5);
 
-    const recommendations = [];
+  const recommendations = [];
 
-    Object.entries(exerciseLibrary).forEach(([exercise, data]) => {
-      let score = 0;
-      let targets = [];
+  Object.entries(exerciseLibrary).forEach(([exercise, data]) => {
+    let score = 0;
+    let targets = [];
 
-      Object.entries(data.muscles).forEach(([muscle, multiplier]) => {
-        const priorityIndex = topNeeds.findIndex(p => p.muscle === muscle);
-        if (priorityIndex !== -1) {
-          const remaining = topNeeds[priorityIndex].remaining;
-          score += remaining * multiplier * (muscleGroups.primary.includes(muscle) ? 2 : 1);
-          targets.push(muscle);
-        }
-      });
+    if (!data.muscles) return;
 
-      if (score > 0) {
-        recommendations.push({
-          exercise,
-          score: score.toFixed(1),
-          targets,
-          primaryMuscle: targets[0] || 'mixed',
-          category: data.category,
-          variants: data.variants
-        });
-      }
+    Object.entries(data.muscles).forEach(([muscle, multiplier]) => {
+      // Only care about tracked systemic muscles here
+      const need = topNeeds.find(p => p.muscle === muscle);
+      if (!need) return;
+
+      const isPrimarySystemic = primarySystemicMuscles.includes(muscle);
+      const weight = musclePriorityWeights[muscle] || 0.5;
+
+      score += need.remaining * multiplier * weight * (isPrimarySystemic ? 2 : 1);
+      targets.push(muscle);
     });
 
-    return recommendations.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-  };
+    // If the exercise doesn't help with any tracked muscles, ignore it
+    if (score <= 0 && !majorLifts[exercise]) {
+      return;
+    }
+
+    // Ensure Big 3 (Squats / Bench / Deadlifts) always appear,
+    // even if their muscles are currently at/above MED
+    if (score <= 0 && majorLifts[exercise]) {
+      const targetMuscles = majorLifts[exercise];
+      targets = targets.length ? targets : targetMuscles;
+      score = 0.1; // tiny base score so they appear at the bottom
+    }
+
+    if (score > 0) {
+      recommendations.push({
+        exercise,
+        score: score.toFixed(1),
+        targets: targets.length ? targets : ['mixed'],
+        primaryMuscle: (targets[0] || 'mixed'),
+        category: data.category,
+        variants: data.variants || []
+      });
+    }
+  });
+
+  // Highest priority first
+  recommendations.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+
+  return recommendations;
+};
 
   const getStrengthRecommendation = () => {
     const priorities = getMuscleGroupPriorities();
@@ -676,16 +728,21 @@ const weekNumber = Math.floor(
   (new Date() - currentWeekStart) / (1000 * 60 * 60 * 24 * 7)
 ) + 1;
 
-// NEW: group recs by the muscles that actually need work
-const deficitMuscles = priorities
-  .filter(p => p.remaining > 0)   // only muscles under MED
-  .slice(0, 4);                   // cap to top 3–4 groups for the UI
+// We care about these core systemic muscle groups for grouping
+const coreMusclesForGroups = ['chest', 'lats', 'upperBack', 'quads', 'glutes', 'hamstrings'];
 
+// Start from muscles that are under MED, but always keep core muscles in
+const deficitMuscles = priorities.filter(
+  p => p.remaining > 0 || coreMusclesForGroups.includes(p.muscle)
+);
+
+// We don't slice here – we just keep however many of the big 6 exist
 const groupedRecommendations = deficitMuscles
   .map(musclePriority => {
-    const recsForMuscle = allRecommendations
+    // Top 2–3 exercises where this muscle is the primary target
+    let recsForMuscle = allRecommendations
       .filter(r => r.primaryMuscle === musclePriority.muscle)
-      .slice(0, 3); // top 2–3 options for that muscle
+      .slice(0, 3);
 
     return {
       muscle: musclePriority.muscle,
@@ -694,6 +751,7 @@ const groupedRecommendations = deficitMuscles
     };
   })
   .filter(group => group.recs.length > 0);
+
 
 // Fallback flat list if you still want it elsewhere (optional)
 const topRecommendations = allRecommendations.slice(0, 8);
@@ -874,7 +932,7 @@ const moreRecommendations = allRecommendations.slice(8);
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal-overlay z-50">
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          <h2 className="text-lg font-bold mb-4">Quick Add Exercise</h2>
+          <h2 className="text-lg font-bold mb-4">Add Accessory Exercise</h2>
 
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -1190,7 +1248,7 @@ const moreRecommendations = allRecommendations.slice(8);
     className="w-full mt-4 p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
   >
     <Plus />
-    Quick Add Exercise
+    Add Accessory Exercise
   </button>
 </div>
 
@@ -1331,6 +1389,33 @@ const moreRecommendations = allRecommendations.slice(8);
             Clear History
           </button>
         </div>
+          <div className="border-t pt-3 mt-2">
+          <h3 className="font-bold text-gray-900 text-sm mb-2">
+            Progression Guidelines
+          </h3>
+          <p className="text-xs text-gray-600 mb-2">
+            This app is built around a &quot;main lift + secondary + assistance&quot; strength philosophy:
+          </p>
+          <ul className="text-xs text-gray-600 list-disc pl-4 space-y-1 mb-2">
+            <li>
+              <strong>Main lifts</strong> (Squat, Bench, Deadlift) stay the same for long blocks
+              (8–12+ weeks) while you practice technique and slowly add load.
+            </li>
+            <li>
+              <strong>Secondary lifts</strong> support the main lifts and usually change every
+              4–8 weeks, or when progress stalls on the main lift.
+            </li>
+            <li>
+              <strong>Assistance work</strong> (accessory exercises) can rotate more often
+              (every 3–6 weeks) based on weak points, boredom, or joint irritation.
+            </li>
+          </ul>
+          <p className="text-xs text-gray-600">
+            Simple rule of thumb: if you&apos;re still able to add weight every 1–2 weeks,
+            keep the exercise. Change assistance first, secondary second, and main lifts last.
+          </p>
+        </div>
+
       </div>
     </div>
   );
@@ -1659,6 +1744,7 @@ root.render(<App />);
    
 </body>
 </html>
+
 
 
 
