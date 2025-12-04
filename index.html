@@ -741,7 +741,14 @@ const groupedRecommendations = deficitMuscles
   .map(musclePriority => {
     // Top 2–3 exercises where this muscle is the primary target
     let recsForMuscle = allRecommendations
-      .filter(r => r.primaryMuscle === musclePriority.muscle)
+      .filter(r => {
+        // If this is the primary muscle, include it
+        if (r.primaryMuscle === musclePriority.muscle) return true;
+
+        // Otherwise, include if the exercise hits this muscle at all
+        const ex = exerciseLibrary[r.exercise];
+        return ex && ex.muscles && ex.muscles[musclePriority.muscle];
+      })
       .slice(0, 3);
 
     return {
@@ -1744,6 +1751,7 @@ root.render(<App />);
    
 </body>
 </html>
+
 
 
 
