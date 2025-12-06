@@ -582,7 +582,7 @@
             : rec.variants?.[0] || rec.exercise;
 
         const selectedVariant = selectedVariants[rec.exercise] || defaultVariant;
-        const sets = setSetSets[rec.exercise] || 3;
+        const sets = setSets[rec.exercise] || 3;
 
         const handleToggle = () => {
           if (!expandedExercises[rec.exercise] && !selectedVariants[rec.exercise]) {
@@ -708,9 +708,8 @@
         );
       };
 
-      const CategoryCard = ({ catKey, bucket, defaultOpen = false }) => {
+      const CategoryCard = ({ catKey, bucket }) => {
         const meta = movementCategoryMeta[catKey];
-        const [open, setOpen] = useState(defaultOpen);
         if (!meta) return null;
 
         const score = bucket.score.toFixed(1);
@@ -718,11 +717,7 @@
 
         return (
           <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-            <button
-              type="button"
-              onClick={() => setOpen(!open)}
-              className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-start justify-between"
-            >
+            <div className="w-full px-4 py-3 bg-gray-50 flex items-start justify-between">
               <div>
                 <div className="text-sm font-bold text-gray-900">
                   {meta.label}
@@ -738,18 +733,13 @@
                 <span className="inline-flex items-center px-2 py-1 text-[11px] font-bold rounded-full bg-blue-600 text-white">
                   {score}
                 </span>
-                <span className="text-gray-400">
-                  {open ? <ChevronUp /> : <ChevronDown />}
-                </span>
               </div>
-            </button>
-            {open && (
-              <div className="px-4 py-3 bg-white border-t border-gray-200 space-y-2">
-                {exercises.map(rec => (
-                  <ExerciseCard key={rec.exercise} rec={rec} />
-                ))}
-              </div>
-            )}
+            </div>
+            <div className="px-4 py-3 bg-white border-t border-gray-200 space-y-2">
+              {exercises.map(rec => (
+                <ExerciseCard key={rec.exercise} rec={rec} />
+              ))}
+            </div>
           </div>
         );
       };
@@ -873,12 +863,11 @@
                 </div>
 
                 <div className="space-y-3">
-                  {sortedCategories.map(([catKey, bucket], idx) => (
+                  {sortedCategories.map(([catKey, bucket]) => (
                     <CategoryCard
                       key={catKey}
                       catKey={catKey}
                       bucket={bucket}
-                      defaultOpen={idx === 0}
                     />
                   ))}
                 </div>
