@@ -528,7 +528,7 @@
           [exercise]: variant
         }));
 
-        //setExpandedExercise(null); causes buggy behaviour
+        setExpandedExercise(null);
       };
 
       const markStrengthWorkout = lift => {
@@ -633,7 +633,10 @@
             </button>
 
             {isExpanded && (
-              <div className="px-4 py-3 border-t border-purple-200 bg-white text-xs space-y-3">
+              <div
+                className="px-4 py-3 border-t border-purple-200 bg-white text-xs space-y-3"
+                onClick={e => e.stopPropagation()}
+              >
                 <div>
                   <label className="block mb-1 font-medium text-gray-700">
                     Variation
