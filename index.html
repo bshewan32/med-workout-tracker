@@ -251,40 +251,39 @@
     };
 
     const App = () => {
-      const [currentView, setCurrentView] = useState('workout');
-      const [workoutHistory, setWorkoutHistory] = useState(() => {
-        const saved = localStorage.getItem('medApp_workoutHistory');
-        return saved ? JSON.parse(saved) : [];
-      });
-      const [lastStrengthWorkout, setLastStrengthWorkout] = useState(() => {
-        const saved = localStorage.getItem('medApp_lastStrengthWorkout');
-        return saved ? JSON.parse(saved) : {};
-      });
-      const [medTarget, setMedTarget] = useState(() => {
-        const saved = localStorage.getItem('medApp_medTarget');
-        return saved ? parseInt(saved) : 10;
-      });
-      const [strengthCycleDays, setStrengthCycleDays] = useState(() => {
-        const saved = localStorage.getItem('medApp_strengthCycleDays');
-        return saved ? parseInt(saved) : 14;
-      });
-      const [lastUsedVariants, setLastUsedVariants] = useState(() => {
-        const saved = localStorage.getItem('medApp_lastUsedVariants');
-        return saved ? JSON.parse(saved) : {};
-      });
-
-      const [expandedCards, setExpandedCards] = useState(new Set());
-      const [selectedVariants, setSelectedVariants] = useState({});
-      const [setSets, setSetSets] = useState({});
-      const [structuredSession, setStructuredSession] = useState(null);
-
-      const [showQuickAdd, setShowQuickAdd] = useState(false);
-      const [quickAddExercise, setQuickAddExercise] = useState('');
-      const [quickAddVariant, setQuickAddVariant] = useState('');
-      const [quickAddSets, setQuickAddSets] = useState(3);
-
-      const [currentWeekStart] = useState(() => getWeekStart());
-
+    const [currentView, setCurrentView] = useState('workout');
+    const [workoutHistory, setWorkoutHistory] = useState(() => {
+      const saved = localStorage.getItem('medApp_workoutHistory');
+      return saved ? JSON.parse(saved) : [];
+    });
+    const [lastStrengthWorkout, setLastStrengthWorkout] = useState(() => {
+      const saved = localStorage.getItem('medApp_lastStrengthWorkout');
+      return saved ? JSON.parse(saved) : {};
+    });
+    const [medTarget, setMedTarget] = useState(() => {
+      const saved = localStorage.getItem('medApp_medTarget');
+      return saved ? parseInt(saved) : 10;
+    });
+    const [strengthCycleDays, setStrengthCycleDays] = useState(() => {
+      const saved = localStorage.getItem('medApp_strengthCycleDays');
+      return saved ? parseInt(saved) : 14;
+    });
+    const [lastUsedVariants, setLastUsedVariants] = useState(() => {
+      const saved = localStorage.getItem('medApp_lastUsedVariants');
+      return saved ? JSON.parse(saved) : {};
+    });
+    
+    const [expandedCards, setExpandedCards] = useState(new Set());
+    const [selectedVariants, setSelectedVariants] = useState({});
+    const [setSets, setSetSets] = useState({});
+    const [structuredSession, setStructuredSession] = useState(null);
+    
+    const [showQuickAdd, setShowQuickAdd] = useState(false);
+    const [quickAddExercise, setQuickAddExercise] = useState('');
+    const [quickAddVariant, setQuickAddVariant] = useState('');
+    const [quickAddSets, setQuickAddSets] = useState(3);
+    
+    const [currentWeekStart] = useState(() => getWeekStart());
       // Persist
       useEffect(() => {
         localStorage.setItem('medApp_workoutHistory', JSON.stringify(workoutHistory));
