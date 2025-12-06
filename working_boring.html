@@ -611,7 +611,7 @@
                   </div>
                   <div className="text-[11px] text-gray-600">
                     <span className="capitalize">{rec.primaryMuscle}</span>
-                    {' ★ '}
+                    {' + '}
                     {rec.category === 'primary' ? 'Compound' : 'Accessory'}
                   </div>
                   <div className="text-[11px] text-gray-500 mt-0.5">
@@ -708,42 +708,51 @@
         );
       };
 
-      const CategoryCard = ({ catKey, bucket }) => {
-        const meta = movementCategoryMeta[catKey];
-        if (!meta) return null;
-
-        const score = bucket.score.toFixed(1);
-        const exercises = bucket.exercises.slice(0, 4); // top 3–4 lifts in that category
-
-        return (
-          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-            <div className="w-full px-4 py-3 bg-gray-50 flex items-start justify-between">
-              <div>
-                <div className="text-sm font-bold text-gray-900">
-                  {meta.label}
-                </div>
-                <div className="text-[11px] text-gray-600">
-                  {meta.subtitle}
-                </div>
-                <div className="text-[11px] text-gray-500 mt-0.5">
-                  {meta.description}
-                </div>
+      const CategoryCard = ({ catKey, bucket, defaultOpen = false }) => {
+      const [open, setOpen] = useState(defaultOpen);
+      const meta = movementCategoryMeta[catKey];
+      if (!meta) return null;
+    
+      const score = bucket.score.toFixed(1);
+      const exercises = bucket.exercises.slice(0, 4);
+    
+      return (
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-start justify-between"
+          >
+            <div>
+              <div className="text-sm font-bold text-gray-900">
+                {meta.label}
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="inline-flex items-center px-2 py-1 text-[11px] font-bold rounded-full bg-blue-600 text-white">
-                  {score}
-                </span>
+              <div className="text-[11px] text-gray-600">
+                {meta.subtitle}
+              </div>
+              <div className="text-[11px] text-gray-500 mt-0.5">
+                {meta.description}
               </div>
             </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="inline-flex items-center px-2 py-1 text-[11px] font-bold rounded-full bg-blue-600 text-white">
+                {score}
+              </span>
+              <span className="text-gray-400">
+                {open ? <ChevronUp /> : <ChevronDown />}
+              </span>
+            </div>
+          </button>
+          {open && (
             <div className="px-4 py-3 bg-white border-t border-gray-200 space-y-2">
               {exercises.map(rec => (
                 <ExerciseCard key={rec.exercise} rec={rec} />
               ))}
             </div>
-          </div>
-        );
-      };
-
+          )}
+        </div>
+      );
+    };
       const WorkoutView = () => (
         <div className="space-y-4">
           {/* Header */}
@@ -868,6 +877,7 @@
                       key={catKey}
                       catKey={catKey}
                       bucket={bucket}
+                      defaultOpen={idx === 0}
                     />
                   ))}
                 </div>
