@@ -273,7 +273,7 @@
         return saved ? JSON.parse(saved) : {};
       });
 
-      //const [expandedExercise, setExpandedExercise] = useState(null);
+      const [expandedExercise, setExpandedExercise] = useState(null);
       const [selectedVariants, setSelectedVariants] = useState({});
       const [setSets, setSetSets] = useState({});
       const [structuredSession, setStructuredSession] = useState(null);
@@ -574,9 +574,7 @@
 
       // Components ------------------------------------------------------------
 
-const ExerciseCard = ({ rec }) => {
-  const [isExpanded, setIsExpanded] = React.useState(false);
-
+const ExerciseCard = ({ rec, isExpanded, onToggle }) => {
   const defaultVariant =
     lastUsedVariants[rec.exercise] &&
     rec.variants?.includes(lastUsedVariants[rec.exercise])
@@ -593,7 +591,7 @@ const ExerciseCard = ({ rec }) => {
         [rec.exercise]: defaultVariant
       }));
     }
-    setIsExpanded(prev => !prev);
+    onToggle();
   };
 
   return (
@@ -744,7 +742,22 @@ const ExerciseCard = ({ rec }) => {
             {open && (
               <div className="px-4 py-3 bg-white border-t border-gray-200 space-y-2">
                 {exercises.map(rec => (
-                  <ExerciseCard key={rec.exercise} rec={rec} />
+                  <ExerciseCard 
+                    key={rec.exercise} 
+                    rec={rec}
+                    isExpanded={expandedCards.has(rec.exercise)}
+                    onToggle={() => {
+                      setExpandedCards(prev => {
+                        const next = new Set(prev);
+                        if (next.has(rec.exercise)) {
+                          next.delete(rec.exercise);
+                        } else {
+                          next.add(rec.exercise);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
                 ))}
               </div>
             )}
@@ -829,9 +842,58 @@ const ExerciseCard = ({ rec }) => {
                 </button>
               </div>
               <div className="space-y-2">
-                <ExerciseCard rec={structuredSession.tier1} />
-                {structuredSession.tier2 && <ExerciseCard rec={structuredSession.tier2} />}
-                {structuredSession.tier3 && <ExerciseCard rec={structuredSession.tier3} />}
+                <ExerciseCard 
+                  rec={structuredSession.tier1}
+                  isExpanded={expandedCards.has(structuredSession.tier1.exercise)}
+                  onToggle={() => {
+                    setExpandedCards(prev => {
+                      const next = new Set(prev);
+                      const ex = structuredSession.tier1.exercise;
+                      if (next.has(ex)) {
+                        next.delete(ex);
+                      } else {
+                        next.add(ex);
+                      }
+                      return next;
+                    });
+                  }}
+                />
+                {structuredSession.tier2 && (
+                  <ExerciseCard 
+                    rec={structuredSession.tier2}
+                    isExpanded={expandedCards.has(structuredSession.tier2.exercise)}
+                    onToggle={() => {
+                      setExpandedCards(prev => {
+                        const next = new Set(prev);
+                        const ex = structuredSession.tier2.exercise;
+                        if (next.has(ex)) {
+                          next.delete(ex);
+                        } else {
+                          next.add(ex);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                )}
+                {structuredSession.tier3 && (
+                  <ExerciseCard 
+                    rec={structuredSession.tier3}
+                    isExpanded={expandedCards.has(structuredSession.tier3.exercise)}
+                    onToggle={() => {
+                      setExpandedCards(prev => {
+                        const next = new Set(prev);
+                        const ex = structuredSession.tier3.exercise;
+                        if (next.has(ex)) {
+                          next.delete(ex);
+                        } else {
+                          next.add(ex);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                )}
               </div>
             </div>
           )}
