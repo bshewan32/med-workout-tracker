@@ -273,7 +273,7 @@
         return saved ? JSON.parse(saved) : {};
       });
 
-      const [expandedExercise, setExpandedExercise] = useState(null);
+      const [expandedCards, setExpandedCards] = useState(new Set());
       const [selectedVariants, setSelectedVariants] = useState({});
       const [setSets, setSetSets] = useState({});
       const [structuredSession, setStructuredSession] = useState(null);
