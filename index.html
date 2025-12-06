@@ -540,7 +540,7 @@
       // Derived ---------------------------------------------------------------
 
       const priorities = getMuscleGroupPriorities();
-      const smartRecs = getSmartRecommendations();
+      const smartRecs = React.useMemo(() => getSmartRecommendations(), [workoutHistory, currentWeekStart, medTarget]);
       const strengthRec = getStrengthRecommendation();
       const currentWeekVolume = calculateCurrentWeekVolume();
 
