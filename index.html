@@ -570,6 +570,52 @@
         .filter(([, bucket]) => bucket.exercises.length > 0)
         .sort((a, b) => b[1].score - a[1].score);
 
+              // Auto-build session from top priorities --------------------------------
+
+      const buildPrioritySessionFromTopRecs = () => {
+        if (!smartRecs || smartRecs.length === 0) return;
+
+        // Take the top pool (anchored in priorities)
+        const topPool = smartRecs.slice(0, 8);
+
+        // Light chaos: shuffle that pool
+        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+
+        const chosen = [];
+        const usedCategories = new Set();
+
+        // First pass: try to pick up to 3 with distinct movement categories
+        shuffled.forEach(rec => {
+          if (chosen.length >= 3) return;
+          const cat = rec.movementCategory || 'press';
+          if (!usedCategories.has(cat)) {
+            chosen.push(rec);
+            usedCategories.add(cat);
+          }
+        });
+
+        // Second pass: if still < 3, fill with remaining (even if cats repeat)
+        if (chosen.length < 3) {
+          shuffled.forEach(rec => {
+            if (chosen.length >= 3) return;
+            if (!chosen.some(c => c.exercise === rec.exercise)) {
+              chosen.push(rec);
+            }
+          });
+        }
+
+        if (chosen.length === 0) return;
+
+        const [tier1, tier2, tier3] = chosen;
+
+        setStructuredSession({
+          lift: 'Priority-based',
+          tier1,
+          tier2: tier2 || null,
+          tier3: tier3 || null
+        });
+      };
+
       // Components ------------------------------------------------------------
 
       const ExerciseCard = ({ rec }) => {
@@ -602,10 +648,17 @@
               [rec.exercise]: defaultVariant
             }));
           }
-          setExpandedExercises(prev => ({
-            ...prev,
-            [rec.exercise]: !prev[rec.exercise]
-          }));
+          setExpandedExercises(prev => {
+            const isCurrentlyOpen = !!prev[rec.exercise];
+
+            if (isCurrentlyOpen) {
+            // Clicking an open card closes all
+            return {};
+            }
+
+            // Open only this one
+            return { [rec.exercise]: true };
+            });
         };
 
         return (
@@ -858,7 +911,7 @@
                   Categories are ranked by weekly need. Pick 1–2 from the top, then fill in.
                 </p>
 
-                {/* Accessory needs strip */}
+                                {/* Accessory needs strip */}
                 <div className="mt-2 mb-2">
                   {accessoryNeeds.length > 0 ? (
                     <p className="text-[11px] text-gray-700">
@@ -877,6 +930,16 @@
                     </p>
                   )}
                 </div>
+
+                {/* Auto-build session from priorities */}
+                <button
+                  type="button"
+                  onClick={buildPrioritySessionFromTopRecs}
+                  className="w-full mb-3 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+                >
+                  <Zap />
+                  <span>Build session from top priorities</span>
+                </button>
 
                 <div className="space-y-3">
                   {sortedCategories.map(([catKey, bucket]) => (
