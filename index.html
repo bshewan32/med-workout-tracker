@@ -595,76 +595,43 @@
 
             // Auto-build session from top priorities --------------------------------
 
+            // Auto-build session from top priorities (random-ish, but sane) ---------
+
       const buildPrioritySessionFromTopRecs = () => {
         if (!smartRecs || smartRecs.length === 0) return;
 
-        // smartRecs is already sorted highest score → lowest
-        const pool = [...smartRecs];
+        // Take the top pool (anchored in priorities)
+        const topPool = smartRecs.slice(0, 8);
 
-        // Helper: mark used so we don't repeat exercises
-        const used = new Set();
+        // Light chaos: shuffle that pool
+        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
 
-        const takeNext = (predicate = () => true) => {
-          const rec = pool.find(r => !used.has(r.exercise) && predicate(r));
-          if (!rec) return null;
-          used.add(rec.exercise);
-          return rec;
-        };
+        const chosen = [];
+        const usedCategories = new Set();
 
-        // 1) Main lift: top primary compound, or just top rec
-        const main =
-          takeNext(r => r.category === 'primary') ||
-          takeNext(); // anything
+        // First pass: try to pick up to 3 with distinct movement categories
+        shuffled.forEach(rec => {
+          if (chosen.length >= 3) return;
+          const cat = rec.movementCategory || 'press';
+          if (!usedCategories.has(cat)) {
+            chosen.push(rec);
+            usedCategories.add(cat);
+          }
+        });
 
-        if (!main) return;
-
-        const picks = [main];
-
-        // 2) Second: different movement category if possible, still primary
-        const second =
-          takeNext(
-            r =>
-              r.category === 'primary' &&
-              r.movementCategory !== main.movementCategory
-          ) || takeNext(r => r.category === 'primary');
-
-        if (second) picks.push(second);
-
-        // 3) Third: anything not used yet (primary or accessory)
-        const third = takeNext();
-        if (third) picks.push(third);
-
-        // Fallback: if somehow still < 3, pad with Big 3
-        if (picks.length < 3) {
-          Object.keys(majorLifts).forEach(liftName => {
-            if (picks.length >= 3) return;
-            if (!exerciseLibrary[liftName]) return;
-            if (used.has(liftName)) return;
-
-            const data = exerciseLibrary[liftName];
-            const primaryMuscle =
-              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
-              'mixed';
-            const targets = Object.keys(data.muscles).filter(m =>
-              muscleGroups.primary.includes(m)
-            );
-
-            const fallbackRec = {
-              exercise: liftName,
-              score: '0.1',
-              targets: targets.length ? targets : [primaryMuscle],
-              primaryMuscle,
-              category: data.category,
-              variants: data.variants,
-              movementCategory: data.movementCategory || 'press'
-            };
-
-            picks.push(fallbackRec);
-            used.add(liftName);
+        // Second pass: if still < 3, fill with remaining (even if cats repeat)
+        if (chosen.length < 3) {
+          shuffled.forEach(rec => {
+            if (chosen.length >= 3) return;
+            if (!chosen.some(c => c.exercise === rec.exercise)) {
+              chosen.push(rec);
+            }
           });
         }
 
-        const [tier1, tier2, tier3] = picks.slice(0, 3);
+        if (chosen.length === 0) return;
+
+        const [tier1, tier2, tier3] = chosen;
 
         setStructuredSession({
           lift: 'Priority-based',
@@ -917,42 +884,8 @@
             </div>
           </div>
 
-          {/* Strength reminder */}
-          {strengthRec && (
-            <div className="bg-orange-50 border-2 border-orange-400 rounded-lg p-4 shadow">
-              <div className="flex items-start gap-3">
-                <AlertCircle />
-                <div className="flex-1 text-xs">
-                  <div className="font-bold text-orange-900 mb-1">
-                    Strength focus: {strengthRec.lift}
-                  </div>
-                  <div className="text-orange-800 mb-2">
-                    Last logged{' '}
-                    {strengthRec.daysSince === 999
-                      ? 'never'
-                      : `${strengthRec.daysSince} days ago`}.
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => markStrengthWorkout(strengthRec.lift)}
-                      className="flex-1 px-2 py-1 rounded-md bg-orange-600 text-white hover:bg-orange-700"
-                    >
-                      Mark done
-                    </button>
-                    <button
-                      onClick={() =>
-                        setStructuredSession(buildStructuredSession(strengthRec.lift))
-                      }
-                      className="flex-1 px-2 py-1 rounded-md bg-orange-700 text-white hover:bg-orange-800 inline-flex items-center justify-center gap-1"
-                    >
-                      <Zap />
-                      Build session
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Strength reminder - removed */}
+          
 
           {/* Structured session */}
           {structuredSession && (
@@ -1044,26 +977,7 @@
                   Add Accessory Exercise
                 </button>
 
-                {!strengthRec && (
-                  <div className="mt-4 pt-3 border-t border-gray-200">
-                    <p className="text-[11px] text-gray-600 mb-2 font-medium">
-                      Want a classic strength day instead?
-                    </p>
-                    <div className="flex gap-2">
-                      {Object.keys(majorLifts).map(lift => (
-                        <button
-                          key={lift}
-                          type="button"
-                          onClick={() => setStructuredSession(buildStructuredSession(lift))}
-                          className="flex-1 px-2 py-1 text-[11px] font-semibold rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
-                        >
-                          {lift.replace(' Press', '')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+               
 
               {/* Weekly progress + Accessory status */}
               <div className="bg-white rounded-lg shadow p-4">
