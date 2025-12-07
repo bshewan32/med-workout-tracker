@@ -37,6 +37,16 @@
         movementCategory: 'press',
         variants: ['Flat Barbell Bench', 'Incline Bench', 'Close Grip Bench', 'Dumbbell Press', 'Machine Press']
       },
+            'Overhead Press': {
+        muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
+        category: 'primary',
+        movementCategory: 'press',
+        variants: [
+          'Standing Barbell Overhead Press',
+          'Seated Dumbbell Shoulder Press',
+          'Machine Shoulder Press'
+        ]
+      },
       'Deadlifts': {
         muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
         category: 'primary',
@@ -63,14 +73,20 @@
         movementCategory: 'squat',
         variants: ['Leg Press', 'Single-Leg Press', 'Hack Squat Machine']
       },
-      'Lunges': {
-        muscles: { quads: 1, glutes: 0.6 },
+            'Lunges': {
+        muscles: { quads: 1, glutes: 0.8 },
         category: 'primary',
-        movementCategory: 'squat',
-        variants: ['Walking Lunges', 'Reverse Lunges', 'Bulgarian Split Squats', 'Static Lunges']
+        movementCategory: 'squat', // knee-dominant pattern
+        variants: [
+          'Walking Lunges',
+          'Reverse Lunges',
+          'Bulgarian Split Squats',
+          'Static Lunges',
+          'Step-ups'
+        ]
       },
       'Hip Thrusts': {
-        muscles: { glutes: 1, hamstrings: 0.4 },
+        muscles: { glutes: 1, hamstrings: 0.5 },
         category: 'primary',
         movementCategory: 'posterior',
         variants: ['Barbell Hip Thrust', 'Dumbbell Hip Thrust', 'Single-Leg Hip Thrust']
@@ -572,41 +588,78 @@
 
               // Auto-build session from top priorities --------------------------------
 
+            // Auto-build session from top priorities --------------------------------
+
       const buildPrioritySessionFromTopRecs = () => {
         if (!smartRecs || smartRecs.length === 0) return;
 
-        // Take the top pool (anchored in priorities)
-        const topPool = smartRecs.slice(0, 8);
+        // smartRecs is already sorted highest score → lowest
+        const pool = [...smartRecs];
 
-        // Light chaos: shuffle that pool
-        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+        // Helper: mark used so we don't repeat exercises
+        const used = new Set();
 
-        const chosen = [];
-        const usedCategories = new Set();
+        const takeNext = (predicate = () => true) => {
+          const rec = pool.find(r => !used.has(r.exercise) && predicate(r));
+          if (!rec) return null;
+          used.add(rec.exercise);
+          return rec;
+        };
 
-        // First pass: try to pick up to 3 with distinct movement categories
-        shuffled.forEach(rec => {
-          if (chosen.length >= 3) return;
-          const cat = rec.movementCategory || 'press';
-          if (!usedCategories.has(cat)) {
-            chosen.push(rec);
-            usedCategories.add(cat);
-          }
-        });
+        // 1) Main lift: top primary compound, or just top rec
+        const main =
+          takeNext(r => r.category === 'primary') ||
+          takeNext(); // anything
 
-        // Second pass: if still < 3, fill with remaining (even if cats repeat)
-        if (chosen.length < 3) {
-          shuffled.forEach(rec => {
-            if (chosen.length >= 3) return;
-            if (!chosen.some(c => c.exercise === rec.exercise)) {
-              chosen.push(rec);
-            }
+        if (!main) return;
+
+        const picks = [main];
+
+        // 2) Second: different movement category if possible, still primary
+        const second =
+          takeNext(
+            r =>
+              r.category === 'primary' &&
+              r.movementCategory !== main.movementCategory
+          ) || takeNext(r => r.category === 'primary');
+
+        if (second) picks.push(second);
+
+        // 3) Third: anything not used yet (primary or accessory)
+        const third = takeNext();
+        if (third) picks.push(third);
+
+        // Fallback: if somehow still < 3, pad with Big 3
+        if (picks.length < 3) {
+          Object.keys(majorLifts).forEach(liftName => {
+            if (picks.length >= 3) return;
+            if (!exerciseLibrary[liftName]) return;
+            if (used.has(liftName)) return;
+
+            const data = exerciseLibrary[liftName];
+            const primaryMuscle =
+              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
+              'mixed';
+            const targets = Object.keys(data.muscles).filter(m =>
+              muscleGroups.primary.includes(m)
+            );
+
+            const fallbackRec = {
+              exercise: liftName,
+              score: '0.1',
+              targets: targets.length ? targets : [primaryMuscle],
+              primaryMuscle,
+              category: data.category,
+              variants: data.variants,
+              movementCategory: data.movementCategory || 'press'
+            };
+
+            picks.push(fallbackRec);
+            used.add(liftName);
           });
         }
 
-        if (chosen.length === 0) return;
-
-        const [tier1, tier2, tier3] = chosen;
+        const [tier1, tier2, tier3] = picks.slice(0, 3);
 
         setStructuredSession({
           lift: 'Priority-based',
@@ -615,7 +668,6 @@
           tier3: tier3 || null
         });
       };
-
       // Components ------------------------------------------------------------
 
             const ExerciseCard = ({ rec }) => {
