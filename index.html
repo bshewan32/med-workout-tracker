@@ -25,11 +25,22 @@
 
     const exerciseLibrary = {
       // Big 3 / main primaries
-      'Squats': {
+            'Squats': {
         muscles: { quads: 1, glutes: 0.6, core: 0.3 },
         category: 'primary',
         movementCategory: 'squat',
-        variants: ['Back Squat', 'Front Squat', 'Safety Bar Squat', 'Hack Squat', 'Pendulum Squat', 'Goblet Squat']
+        variants: [
+          'Back Squat',
+          'Front Squat',
+          'Safety Bar Squat',
+          'Hack Squat',
+          'Pendulum Squat',
+          'Goblet Squat',
+          'Leg Press',
+          'Single-Leg Press',
+          'Hack Squat Machine',
+          'Belt Squat'
+        ]
       },
       'Bench Press': {
         muscles: { chest: 1, triceps: 0.6, shoulders: 0.4 },
@@ -67,13 +78,7 @@
         movementCategory: 'pull',
         variants: ['Pull-ups', 'Chin-ups', 'Neutral Grip', 'Band-Assisted Pull-ups', 'Lat Pulldown']
       },
-      'Leg Press': {
-        muscles: { quads: 1, glutes: 0.4 },
-        category: 'primary',
-        movementCategory: 'squat',
-        variants: ['Leg Press', 'Single-Leg Press', 'Hack Squat Machine']
-      },
-            'Lunges': {
+      'Lunges': {
         muscles: { quads: 1, glutes: 0.8 },
         category: 'primary',
         movementCategory: 'squat', // knee-dominant pattern
