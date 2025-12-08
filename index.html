@@ -642,189 +642,198 @@
       };
       // Components ------------------------------------------------------------
 
-            const ExerciseCard = ({ rec }) => {
-        const isExpanded = !!expandedExercises[rec.exercise];
-
-        const cardClasses =
-          'border rounded-xl overflow-hidden bg-white transition-all duration-200 ' +
-          (isExpanded
-            ? 'border-indigo-500 shadow-md ring-1 ring-indigo-200'
-            : 'border-slate-200 shadow-sm hover:border-slate-300');
-
-        const headerClasses =
-          'w-full text-left px-3 py-2.5 flex flex-col gap-1 bg-white ' +
-          (isExpanded ? 'bg-indigo-50' : '');
-
-        const movementMeta = movementCategoryMeta[rec.movementCategory] || null;
-
-        const defaultVariant =
-          lastUsedVariants[rec.exercise] &&
-          rec.variants?.includes(lastUsedVariants[rec.exercise])
-            ? lastUsedVariants[rec.exercise]
-            : rec.variants?.[0] || rec.exercise;
-
-        const selectedVariant = selectedVariants[rec.exercise] || defaultVariant;
-        const sets = setSets[rec.exercise] || 3;
-
-        const handleToggle = () => {
-          // Seed variant first time opened
-          if (!expandedExercises[rec.exercise] && !selectedVariants[rec.exercise]) {
-            setSelectedVariants(prev => ({
-              ...prev,
-              [rec.exercise]: defaultVariant
-            }));
+       const ExerciseCard = ({ rec }) => {
+      const isExpanded = !!expandedExercises[rec.exercise];
+    
+      const cardClasses =
+        'border rounded-xl overflow-hidden bg-white transition-all duration-200 ' +
+        (isExpanded
+          ? 'border-indigo-500 shadow-md ring-1 ring-indigo-200'
+          : 'border-slate-200 shadow-sm hover:border-slate-300');
+    
+      const headerClasses =
+        'w-full text-left px-3 py-2.5 flex flex-col gap-1 bg-white ' +
+        (isExpanded ? 'bg-indigo-50' : '');
+    
+      const movementMeta = movementCategoryMeta[rec.movementCategory] || null;
+    
+      const defaultVariant =
+        lastUsedVariants[rec.exercise] &&
+        rec.variants?.includes(lastUsedVariants[rec.exercise])
+          ? lastUsedVariants[rec.exercise]
+          : rec.variants?.[0] || rec.exercise;
+    
+      const selectedVariant = selectedVariants[rec.exercise] || defaultVariant;
+      const sets = setSets[rec.exercise] || 3;
+    
+      const handleToggle = () => {
+        // Seed variant first time opened
+        if (!expandedExercises[rec.exercise] && !selectedVariants[rec.exercise]) {
+          setSelectedVariants(prev => ({
+            ...prev,
+            [rec.exercise]: defaultVariant
+          }));
+        }
+    
+        // Accordion behaviour: only one card open
+        setExpandedExercises(prev => {
+          const isCurrentlyOpen = !!prev[rec.exercise];
+          if (isCurrentlyOpen) {
+            return {};
           }
-
-          // Accordion behaviour: only one card open
-          setExpandedExercises(prev => {
-            const isCurrentlyOpen = !!prev[rec.exercise];
-            if (isCurrentlyOpen) {
-              return {};
-            }
-            return { [rec.exercise]: true };
-          });
-        };
-
-        const hasScore = rec.score !== null && rec.score !== undefined;
-
-        return (
-          <div className={cardClasses}>
-            <button
-              type="button"
-              onClick={handleToggle}
-              className={headerClasses}
-            >
-              <div className="flex justify-between items-start gap-2">
-                {/* Left side: name + chips + mini info */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-900 truncate">
-                    {rec.exercise}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                    {movementMeta && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-700">
-                        {movementMeta.label}
-                      </span>
-                    )}
-                    <span
-                      className={
-                        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ' +
-                        (rec.category === 'primary'
-                          ? 'bg-indigo-100 text-indigo-700'
-                          : 'bg-slate-100 text-slate-700')
-                      }
-                    >
-                      {rec.category === 'primary' ? 'Compound' : 'Accessory'}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      <span className="capitalize">{rec.primaryMuscle}</span>
-                    </span>
-                  </div>
-
-                  <div className="text-[10px] text-slate-500 mt-0.5 truncate">
-                    Last:&nbsp;
-                    <span className="font-medium">{defaultVariant}</span>
-                    {' · '}
-                    Targets:&nbsp;
-                    <span>{rec.targets?.join(', ') || rec.primaryMuscle}</span>
-                  </div>
+          return { [rec.exercise]: true };
+        });
+      };
+    
+      const handleLog = () => {
+        // Log the work
+        logWorkout(rec.exercise, selectedVariant, sets);
+        // Collapse all cards after logging to avoid double-logging
+        setExpandedExercises({});
+        // If you ever want to only close this card instead:
+        // setExpandedExercises(prev => ({ ...prev, [rec.exercise]: false }));
+      };
+    
+      const hasScore = rec.score !== null && rec.score !== undefined;
+    
+      return (
+        <div className={cardClasses}>
+          <button
+            type="button"
+            onClick={handleToggle}
+            className={headerClasses}
+          >
+            <div className="flex justify-between items-start gap-2">
+              {/* Left side: name + chips + mini info */}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-slate-900 truncate">
+                  {rec.exercise}
                 </div>
-
-                {/* Right side: score + chevron */}
-                <div className="flex flex-col items-end gap-1 ml-1">
-                  {hasScore && (
-                    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-600 text-white">
-                      {rec.score}
+    
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                  {movementMeta && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-700">
+                      {movementMeta.label}
                     </span>
                   )}
                   <span
                     className={
-                      'mt-1 inline-flex items-center justify-center w-6 h-6 rounded-full border border-slate-200 text-slate-400 transition-transform duration-200 ' +
-                      (isExpanded ? 'rotate-180 bg-slate-50' : 'bg-white')
+                      'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ' +
+                      (rec.category === 'primary'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-slate-100 text-slate-700')
                     }
                   >
-                    <ChevronDown />
+                    {rec.category === 'primary' ? 'Compound' : 'Accessory'}
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    <span className="capitalize">{rec.primaryMuscle}</span>
                   </span>
                 </div>
+    
+                <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                  Last:&nbsp;
+                  <span className="font-medium">{defaultVariant}</span>
+                  {' · '}
+                  Targets:&nbsp;
+                  <span>{rec.targets?.join(', ') || rec.primaryMuscle}</span>
+                </div>
               </div>
-            </button>
-
-            {isExpanded && (
-              <div className="px-3 py-3 border-t border-slate-100 bg-slate-50 text-xs space-y-3 transition-all duration-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block mb-1 font-medium text-slate-700">
-                      Variation
-                    </label>
-                    <select
-                      value={selectedVariant}
-                      onChange={e =>
-                        setSelectedVariants(prev => ({
+    
+              {/* Right side: score + chevron */}
+              <div className="flex flex-col items-end gap-1 ml-1">
+                {hasScore && (
+                  <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-600 text-white">
+                    {rec.score}
+                  </span>
+                )}
+                <span
+                  className={
+                    'mt-1 inline-flex items-center justify-center w-6 h-6 rounded-full border border-slate-200 text-slate-400 transition-transform duration-200 ' +
+                    (isExpanded ? 'rotate-180 bg-slate-50' : 'bg-white')
+                  }
+                >
+                  <ChevronDown />
+                </span>
+              </div>
+            </div>
+          </button>
+    
+          {isExpanded && (
+            <div className="px-3 py-3 border-t border-slate-100 bg-slate-50 text-xs space-y-3 transition-all duration-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block mb-1 font-medium text-slate-700">
+                    Variation
+                  </label>
+                  <select
+                    value={selectedVariant}
+                    onChange={e =>
+                      setSelectedVariants(prev => ({
+                        ...prev,
+                        [rec.exercise]: e.target.value
+                      }))
+                    }
+                    className="w-full border-2 border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-xs bg-white"
+                  >
+                    {rec.variants?.map(v => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium text-slate-700">
+                    Sets
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSetSets(prev => ({
                           ...prev,
-                          [rec.exercise]: e.target.value
+                          [rec.exercise]: Math.max(1, sets - 1)
                         }))
                       }
-                      className="w-full border-2 border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-xs bg-white"
+                      className="px-2 py-1 border border-slate-300 rounded-md hover:bg-white"
                     >
-                      {rec.variants?.map(v => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block mb-1 font-medium text-slate-700">
-                      Sets
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSetSets(prev => ({
-                            ...prev,
-                            [rec.exercise]: Math.max(1, sets - 1)
-                          }))
-                        }
-                        className="px-2 py-1 border border-slate-300 rounded-md hover:bg-white"
-                      >
-                        <Minus />
-                      </button>
-                      <span className="text-sm font-semibold min-w-[2rem] text-center">
-                        {sets}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSetSets(prev => ({
-                            ...prev,
-                            [rec.exercise]: Math.min(10, sets + 1)
-                          }))
-                        }
-                        className="px-2 py-1 border border-slate-300 rounded-md hover:bg-white"
-                      >
-                        <Plus />
-                      </button>
-                    </div>
+                      <Minus />
+                    </button>
+                    <span className="text-sm font-semibold min-w-[2rem] text-center">
+                      {sets}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSetSets(prev => ({
+                          ...prev,
+                          [rec.exercise]: Math.min(10, sets + 1)
+                        }))
+                      }
+                      className="px-2 py-1 border border-slate-300 rounded-md hover:bg-white"
+                    >
+                      <Plus />
+                    </button>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => logWorkout(rec.exercise, selectedVariant, sets)}
-                  className="w-full inline-flex items-center justify-center px-3 py-2 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
-                >
-                  <CheckCircle />
-                  <span className="ml-2">
-                    Log {sets} sets of {selectedVariant}
-                  </span>
-                </button>
               </div>
-            )}
-          </div>
-        );
-      };
+    
+              <button
+                type="button"
+                onClick={handleLog}
+                className="w-full inline-flex items-center justify-center px-3 py-2 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+              >
+                <CheckCircle />
+                <span className="ml-2">
+                  Log {sets} sets of {selectedVariant}
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    };
             const CategoryCard = ({ catKey, bucket }) => {
         const meta = movementCategoryMeta[catKey];
         if (!meta) return null;
