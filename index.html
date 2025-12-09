@@ -58,17 +58,7 @@
           'Machine Shoulder Press'
         ]
       },
-      'Dips': {
-        muscles: { chest: 0.8, triceps: 1, shoulders: 0.4 },
-        category: 'primary',
-        movementCategory: 'press',
-        variants: [
-          'Parallel Bar Dips',
-          'Assisted Dips',
-          'Weighted Dips',
-          'Bench Dips'
-        ]
-      },
+      
       'Deadlifts': {
         muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
         category: 'primary',
@@ -126,6 +116,17 @@
         category: 'accessory',
         movementCategory: 'accessory',
         variants: ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Cable Curl']
+      },
+      'Dips': {
+        muscles: { chest: 0.8, triceps: 1, shoulders: 0.4 },
+        category: 'primary',
+        movementCategory: 'press',
+        variants: [
+          'Parallel Bar Dips',
+          'Assisted Dips',
+          'Weighted Dips',
+          'Bench Dips'
+        ]
       },
       'Tricep Extensions': {
         muscles: { triceps: 1 },
@@ -604,85 +605,88 @@
 
              
       // Auto-build session from top priorities (random-ish, with optional accessory finisher)
-      const buildPrioritySessionFromTopRecs = () => {
-        if (!smartRecs || smartRecs.length === 0) return;
-      
-        // Slightly bigger pool = a bit more chaos
-        const topPool = smartRecs.slice(0, 10);
-      
-        // Light chaos: shuffle that pool
-        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
-      
-        const chosen = [];
-        const usedCategories = new Set();
-      
-        // First pass: try to pick up to 3 with distinct movement categories
-        shuffled.forEach(rec => {
-          if (chosen.length >= 3) return;
-          const cat = rec.movementCategory || 'press';
-          if (!usedCategories.has(cat)) {
-            chosen.push(rec);
-            usedCategories.add(cat);
-          }
-        });
-      
-        // Second pass: if still < 3, fill with remaining (even if cats repeat)
-        if (chosen.length < 3) {
-          shuffled.forEach(rec => {
-            if (chosen.length >= 3) return;
-            if (!chosen.some(c => c.exercise === rec.exercise)) {
-              chosen.push(rec);
-            }
-          });
-        }
-      
-        if (chosen.length === 0) return;
-      
-        // Optional 4th exercise: isolation/accessory finisher
-        let finisher = null;
-        const shouldAddFinisher =
-          accessoryNeeds &&
-          accessoryNeeds.length > 0 &&
-          Math.random() < 0.35; // ~35% of the time we add a 4th
-      
-        if (shouldAddFinisher) {
-          const topAccessoryNeed = accessoryNeeds[0]; // e.g. calves, biceps, etc.
-          const accessoryCandidates = Object.entries(exerciseLibrary)
-            .filter(([name, data]) => data.category === 'accessory')
-            .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
-      
-          if (accessoryCandidates.length > 0) {
-            const [name, data] =
-              accessoryCandidates[
-                Math.floor(Math.random() * accessoryCandidates.length)
-              ];
-      
-            const primaryMuscle =
-              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
-              topAccessoryNeed.muscle;
-      
-            finisher = {
-              exercise: name,
-              score: null,
-              targets: [topAccessoryNeed.muscle],
-              primaryMuscle,
-              category: data.category,
-              variants: data.variants,
-              movementCategory: data.movementCategory || 'accessory'
-            };
-          }
-        }
-      
-        const [tier1, tier2, tier3] = chosen;
-      
-        setStructuredSession({
-          lift: 'Priority-based',
-          tier1,
-          tier2: tier2 || null,
-          tier3: tier3 || null,
-          tier4: finisher || null
-        });
+      // Auto-build session from top priorities (random-ish, with optional accessory finisher)
+const buildPrioritySessionFromTopRecs = () => {
+  if (!smartRecs || smartRecs.length === 0) return;
+
+  // Slightly bigger pool = a bit more chaos
+  const topPool = smartRecs.slice(0, 10);
+
+  // Light chaos: shuffle that pool
+  const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+
+  const chosen = [];
+  const usedCategories = new Set();
+
+  // First pass: try to pick up to 3 with distinct movement categories
+  shuffled.forEach(rec => {
+    if (chosen.length >= 3) return;
+    const cat = rec.movementCategory || 'press';
+    if (!usedCategories.has(cat)) {
+      chosen.push(rec);
+      usedCategories.add(cat);
+    }
+  });
+
+  // Second pass: if still < 3, fill with remaining (even if cats repeat)
+  if (chosen.length < 3) {
+    shuffled.forEach(rec => {
+      if (chosen.length >= 3) return;
+      if (!chosen.some(c => c.exercise === rec.exercise)) {
+        chosen.push(rec);
+      }
+    });
+  }
+
+  if (chosen.length === 0) return;
+
+  // Optional 4th exercise: isolation/accessory finisher
+  let finisher = null;
+  const shouldAddFinisher =
+    accessoryNeeds &&
+    accessoryNeeds.length > 0 &&
+    Math.random() < 0.35; // ~35% of the time we add a 4th
+
+  if (shouldAddFinisher) {
+    const topAccessoryNeed = accessoryNeeds[0]; // e.g. calves, biceps, etc.
+    const accessoryCandidates = Object.entries(exerciseLibrary)
+      .filter(([name, data]) => data.category === 'accessory')
+      .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
+
+    if (accessoryCandidates.length > 0) {
+      const [name, data] =
+        accessoryCandidates[
+          Math.floor(Math.random() * accessoryCandidates.length)
+        ];
+
+      const primaryMuscle =
+        Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
+        topAccessoryNeed.muscle;
+
+      finisher = {
+        exercise: name,
+        score: null,
+        targets: [topAccessoryNeed.muscle],
+        primaryMuscle,
+        category: data.category,
+        variants: data.variants,
+        movementCategory: data.movementCategory || 'accessory'
       };
+    }
+  }
+
+  const [tier1, tier2, tier3] = chosen;
+
+  setStructuredSession({
+    lift: 'Priority-based',
+    tier1,
+    tier2: tier2 || null,
+    tier3: tier3 || null,
+    tier4: finisher || null
+  });
+};
+
+      
       // Components ------------------------------------------------------------
 
        const ExerciseCard = ({ rec }) => {
