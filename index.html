@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
@@ -22,6 +22,24 @@
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes confetti {
+      0% { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+      100% { transform: translateY(1000px) rotateZ(720deg); opacity: 0; }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
     .card-hover {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -57,6 +75,20 @@
     .category-expand {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      animation: confetti 3s ease-out forwards;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .toast {
+      animation: slideUp 0.3s ease-out;
+    }
+    .achievement-unlock {
+      animation: pulse 0.5s ease-in-out;
+    }
   </style>
   <script>
     tailwind.config = {
@@ -89,7 +121,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useCallback } = React;
 
     // --- Data -----------------------------------------------------------------
 
@@ -243,13 +275,13 @@
       press: ['chest', 'shoulders', 'triceps']
     };
 
-
     const muscleGroups = {
       primary: ['chest', 'lats', 'upperBack', 'quads', 'glutes', 'hamstrings'],
       accessory: ['shoulders', 'biceps', 'triceps', 'calves', 'core']
     };
 
     const allMuscles = [...muscleGroups.primary, ...muscleGroups.accessory];
+    const MESOCYCLE_WEEKS = 6;
 
     const majorLifts = {
       'Squats': ['quads', 'glutes'],
@@ -293,6 +325,63 @@
         gradient: 'from-emerald-500 to-teal-500',
         primaryMuscles: ['glutes', 'hamstrings'],
         accessoryMuscles: []
+      }
+    };
+
+    const achievementDefinitions = {
+      firstWorkout: { 
+        icon: '🎯', 
+        label: 'First Steps', 
+        description: 'Log your first workout',
+        check: (stats) => stats.totalWorkouts >= 1
+      },
+      week1Complete: { 
+        icon: '✅', 
+        label: 'Week Warrior', 
+        description: 'Complete a full training week',
+        check: (stats) => stats.weeksCompleted >= 1
+      },
+      perfectWeek: { 
+        icon: '⭐', 
+        label: 'Perfect Week', 
+        description: 'Hit all 6 primary muscles in one week',
+        check: (stats) => stats.perfectWeeks >= 1
+      },
+      streak3: { 
+        icon: '🔥', 
+        label: 'On Fire', 
+        description: 'Maintain a 3-week streak',
+        check: (stats) => stats.currentStreak >= 3
+      },
+      streak5: { 
+        icon: '🔥🔥', 
+        label: 'Unstoppable', 
+        description: 'Maintain a 5-week streak',
+        check: (stats) => stats.currentStreak >= 5
+      },
+      volume100: { 
+        icon: '💯', 
+        label: 'Century Club', 
+        description: 'Log 100 total sets',
+        check: (stats) => stats.totalSets >= 100
+      },
+      volume500: { 
+        icon: '💪', 
+        label: 'Volume Beast', 
+        description: 'Log 500 total sets',
+        check: (stats) => stats.totalSets >= 500
+      },
+      allMusclesHit: { 
+        icon: '👑', 
+        label: 'Completionist', 
+        description: 'Hit all 11 muscle groups in one week',
+        check: (stats) => stats.allMusclesHitWeeks >= 1
+      },
+      dedication: {
+        icon: '🏆',
+        label: 'Dedication',
+        description: 'Log 50 workouts',
+        check: (stats) => stats.totalWorkouts >= 50
       }
     };
 
@@ -348,6 +437,12 @@
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     );
+    const Award = ({ className = "", size = 20 }) => (
+      <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="7" />
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+      </svg>
+    );
 
     // Helpers
     const getWeekStart = (date = new Date()) => {
@@ -362,6 +457,25 @@
     const daysBetween = (a, b) => {
       const ms = Math.abs(a - b);
       return Math.floor(ms / (1000 * 60 * 60 * 24));
+    };
+
+    // Confetti function
+    const triggerConfetti = () => {
+      const colors = ['#667eea', '#764ba2', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'];
+      const confettiCount = 50;
+      
+      for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti-piece';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 0.3 + 's';
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => confetti.remove(), 3000);
+        }, i * 30);
+      }
     };
 
     const App = () => {
@@ -386,11 +500,20 @@
         const saved = localStorage.getItem('medApp_lastUsedVariants');
         return saved ? JSON.parse(saved) : {};
       });
+      const [achievements, setAchievements] = useState(() => {
+        const saved = localStorage.getItem('medApp_achievements');
+        return saved ? JSON.parse(saved) : {};
+      });
+      const [personalBests, setPersonalBests] = useState(() => {
+        const saved = localStorage.getItem('medApp_personalBests');
+        return saved ? JSON.parse(saved) : {};
+      });
       const [expandedExercises, setExpandedExercises] = useState({});
       const [expandedCategories, setExpandedCategories] = useState({});
       const [selectedVariants, setSelectedVariants] = useState({});
       const [setSets, setSetSets] = useState({});
       const [structuredSession, setStructuredSession] = useState(null);
+      const [toasts, setToasts] = useState([]);
       
       const [showQuickAdd, setShowQuickAdd] = useState(false);
       const [quickAddExercise, setQuickAddExercise] = useState('');
@@ -398,6 +521,10 @@
       const [quickAddSets, setQuickAddSets] = useState(3);
       
       const [currentWeekStart] = useState(() => getWeekStart());
+      const [mesocycleStart] = useState(() => {
+        const saved = localStorage.getItem('medApp_mesocycleStart');
+        return saved ? new Date(saved) : getWeekStart();
+      });
 
       // Persist
       useEffect(() => {
@@ -415,6 +542,12 @@
       useEffect(() => {
         localStorage.setItem('medApp_lastUsedVariants', JSON.stringify(lastUsedVariants));
       }, [lastUsedVariants]);
+      useEffect(() => {
+        localStorage.setItem('medApp_achievements', JSON.stringify(achievements));
+      }, [achievements]);
+      useEffect(() => {
+        localStorage.setItem('medApp_personalBests', JSON.stringify(personalBests));
+      }, [personalBests]);
 
       // Init sets
       useEffect(() => {
@@ -425,17 +558,109 @@
         setSetSets(initial);
       }, []);
 
+      // Toast system
+      const showToast = useCallback((message, type = 'success', icon = '✓') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type, icon }]);
+        setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+        }, 3000);
+      }, []);
+
+      // Calculate weekly volumes
+      const processWeeklyVolumes = useCallback(() => {
+        const weekMap = new Map();
+        
+        workoutHistory.forEach(workout => {
+          const workoutDate = new Date(workout.date);
+          const weekStart = getWeekStart(workoutDate);
+          const weekKey = weekStart.toISOString();
+          
+          if (!weekMap.has(weekKey)) {
+            weekMap.set(weekKey, {
+              weekStart: weekKey,
+              volumes: {},
+              workouts: []
+            });
+            allMuscles.forEach(m => weekMap.get(weekKey).volumes[m] = 0);
+          }
+          
+          const weekData = weekMap.get(weekKey);
+          weekData.workouts.push(workout);
+          
+          const exercise = exerciseLibrary[workout.exercise];
+          if (exercise) {
+            Object.entries(exercise.muscles).forEach(([muscle, multiplier]) => {
+              if (allMuscles.includes(muscle)) {
+                weekData.volumes[muscle] += workout.sets * multiplier;
+              }
+            });
+          }
+        });
+        
+        // Calculate grades
+        weekMap.forEach((data, key) => {
+          const musclesHit = muscleGroups.primary.filter(m => 
+            data.volumes[m] >= medTarget
+          ).length;
+          
+          if (musclesHit === 6) {
+            data.grade = { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!' };
+          } else if (musclesHit >= 5) {
+            data.grade = { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent' };
+          } else if (musclesHit >= 4) {
+            data.grade = { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great' };
+          } else if (musclesHit >= 3) {
+            data.grade = { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good' };
+          } else {
+            data.grade = { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going' };
+          }
+        });
+        
+        const volumes = Array.from(weekMap.values())
+          .sort((a, b) => new Date(b.weekStart) - new Date(a.weekStart))
+          .slice(0, MESOCYCLE_WEEKS);
+        
+        return volumes;
+      }, [workoutHistory, medTarget]);
+
+      const weeklyVolumes = React.useMemo(() => processWeeklyVolumes(), [processWeeklyVolumes]);
+
+      const getMesocycleAverage = useCallback(() => {
+        if (weeklyVolumes.length === 0) {
+          const empty = {};
+          allMuscles.forEach(muscle => empty[muscle] = 0);
+          return empty;
+        }
+
+        const totals = {};
+        allMuscles.forEach(muscle => totals[muscle] = 0);
+
+        weeklyVolumes.forEach(week => {
+          allMuscles.forEach(muscle => {
+            totals[muscle] += week.volumes[muscle] || 0;
+          });
+        });
+
+        const averages = {};
+        allMuscles.forEach(muscle => {
+          averages[muscle] = totals[muscle] / weeklyVolumes.length;
+        });
+
+        return averages;
+      }, [weeklyVolumes]);
+
       // Volumes / priorities
-      const getCurrentWeekWorkouts = () => {
+      const getCurrentWeekWorkouts = useCallback(() => {
         const end = new Date(currentWeekStart);
         end.setDate(end.getDate() + 7);
         return workoutHistory.filter(w => {
           const d = new Date(w.date);
           return d >= currentWeekStart && d < end;
         });
-      };
+      }, [workoutHistory, currentWeekStart]);
 
-      const calculateCurrentWeekVolume = () => {
+      const calculateCurrentWeekVolume = useCallback(() => {
         const volume = {};
         allMuscles.forEach(m => (volume[m] = 0));
         getCurrentWeekWorkouts().forEach(w => {
@@ -447,78 +672,37 @@
           });
         });
         return volume;
-      };
+      }, [getCurrentWeekWorkouts]);
 
-      const getMuscleGroupPriorities = () => {
+      const getMuscleGroupPriorities = useCallback(() => {
         const current = calculateCurrentWeekVolume();
+        const mesocycleAvg = getMesocycleAverage();
+        
         return allMuscles
           .map(muscle => {
             const currentVol = current[muscle] || 0;
             const remaining = Math.max(0, medTarget - currentVol);
             const percentage = medTarget > 0 ? (currentVol / medTarget) * 100 : 0;
             const isPrimary = muscleGroups.primary.includes(muscle);
-            const priority = remaining * (isPrimary ? 2 : 1);
+            const mesocycleAvg_ = mesocycleAvg[muscle] || 0;
+            const chronicDeficit = isPrimary && mesocycleAvg_ < (medTarget * 0.8);
+            const priority = remaining * (isPrimary ? 2 : 1) + (chronicDeficit ? 5 : 0);
+            
             return {
               muscle,
               current: currentVol,
               remaining,
               percentage,
               isPrimary,
+              mesocycleAvg: mesocycleAvg_,
+              chronicDeficit,
               priority
             };
           })
           .sort((a, b) => b.priority - a.priority);
-      };
+      }, [calculateCurrentWeekVolume, getMesocycleAverage, medTarget]);
 
-      // Helper: get worst (or avg) progress for a movement category
-      const getCategoryProgress = (catKey, muscleProgress) => {
-        const muscles = movementMuscles[catKey] || [];
-        if (!muscles.length) return 0;
-      
-        const values = muscles
-          .map(m => muscleProgress[m] ?? 0)
-          .filter(v => v >= 0);
-      
-        if (!values.length) return 0;
-      
-        // You can use avg or min – I’d use min so the colour reflects the lagging muscle
-        const min = Math.min(...values);
-        return min; // 0–100+
-      };
-      
-      // Helper: map % → colour classes
-      const getCategoryColorClasses = (catKey, muscleProgress) => {
-        const pct = getCategoryProgress(catKey, muscleProgress);
-      
-        if (pct >= 100) {
-          return {
-            border: 'border-emerald-500',
-            bgHeader: 'bg-emerald-50',
-            chip: 'bg-emerald-600 text-white'
-          };
-        } else if (pct >= 75) {
-          return {
-            border: 'border-lime-400',
-            bgHeader: 'bg-lime-50',
-            chip: 'bg-lime-500 text-white'
-          };
-        } else if (pct >= 50) {
-          return {
-            border: 'border-amber-400',
-            bgHeader: 'bg-amber-50',
-            chip: 'bg-amber-500 text-white'
-          };
-        } else {
-          return {
-            border: 'border-rose-400',
-            bgHeader: 'bg-rose-50',
-            chip: 'bg-rose-500 text-white'
-          };
-        }
-      };
-
-
-      const getSmartRecommendations = () => {
+      const getSmartRecommendations = useCallback(() => {
         const priorities = getMuscleGroupPriorities();
         const currentWeekVolume = calculateCurrentWeekVolume();
 
@@ -539,7 +723,8 @@
             if (muscleScore > 0) {
               const alreadyHit = (currentWeekVolume[need.muscle] || 0) > 0;
               const zeroBoost = alreadyHit ? 1.0 : 1.5;
-              const weight = need.remaining * 3 * zeroBoost;
+              const chronicBoost = need.chronicDeficit ? 1.5 : 1.0;
+              const weight = need.remaining * 3 * zeroBoost * chronicBoost;
               score += muscleScore * weight;
               targets.push(need.muscle);
             }
@@ -587,9 +772,110 @@
         });
 
         return recs.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-      };
+      }, [getMuscleGroupPriorities, calculateCurrentWeekVolume]);
 
-      const buildPrioritySessionFromTopRecs = () => {
+      // Calculate stats for achievements
+      const calculateStats = useCallback(() => {
+        const totalWorkouts = workoutHistory.length;
+        const totalSets = workoutHistory.reduce((sum, w) => sum + w.sets, 0);
+        
+        // Calculate streaks
+        let currentStreak = 0;
+        let bestStreak = 0;
+        let tempStreak = 0;
+        
+        const sortedWeeks = [...weeklyVolumes].sort((a, b) => 
+          new Date(a.weekStart) - new Date(b.weekStart)
+        );
+        
+        sortedWeeks.forEach((week, index) => {
+          const musclesHit = muscleGroups.primary.filter(m => 
+            week.volumes[m] >= medTarget
+          ).length;
+          
+          if (musclesHit >= 4) { // At least 4 muscles hit = streak continues
+            tempStreak++;
+            bestStreak = Math.max(bestStreak, tempStreak);
+            
+            // Check if this is current week
+            if (week.weekStart === currentWeekStart.toISOString()) {
+              currentStreak = tempStreak;
+            }
+          } else {
+            tempStreak = 0;
+          }
+        });
+        
+        const perfectWeeks = weeklyVolumes.filter(week => {
+          const musclesHit = muscleGroups.primary.filter(m => 
+            week.volumes[m] >= medTarget
+          ).length;
+          return musclesHit === 6;
+        }).length;
+        
+        const allMusclesHitWeeks = weeklyVolumes.filter(week => {
+          return allMuscles.every(m => week.volumes[m] >= medTarget);
+        }).length;
+        
+        const weeksCompleted = weeklyVolumes.filter(week => {
+          const musclesHit = muscleGroups.primary.filter(m => 
+            week.volumes[m] >= medTarget
+          ).length;
+          return musclesHit >= 4;
+        }).length;
+        
+        return {
+          totalWorkouts,
+          totalSets,
+          currentStreak,
+          bestStreak,
+          perfectWeeks,
+          allMusclesHitWeeks,
+          weeksCompleted
+        };
+      }, [workoutHistory, weeklyVolumes, medTarget, currentWeekStart]);
+
+      // Check and unlock achievements
+      useEffect(() => {
+        const stats = calculateStats();
+        let newlyUnlocked = [];
+        
+        Object.entries(achievementDefinitions).forEach(([key, def]) => {
+          if (!achievements[key] && def.check(stats)) {
+            newlyUnlocked.push(key);
+            setAchievements(prev => ({ ...prev, [key]: true }));
+          }
+        });
+        
+        if (newlyUnlocked.length > 0) {
+          newlyUnlocked.forEach(key => {
+            const def = achievementDefinitions[key];
+            showToast(`Achievement Unlocked: ${def.label}!`, 'achievement', def.icon);
+          });
+        }
+      }, [workoutHistory, achievements, calculateStats, showToast]);
+
+      // Update personal bests
+      const updatePersonalBests = useCallback((currentWeekVolume) => {
+        let updated = false;
+        const newBests = { ...personalBests };
+        
+        allMuscles.forEach(muscle => {
+          const current = currentWeekVolume[muscle] || 0;
+          const best = personalBests[muscle] || 0;
+          
+          if (current > best) {
+            newBests[muscle] = current;
+            updated = true;
+          }
+        });
+        
+        if (updated) {
+          setPersonalBests(newBests);
+        }
+      }, [personalBests]);
+
+      const buildPrioritySessionFromTopRecs = useCallback(() => {
         if (!smartRecs || smartRecs.length === 0) return;
 
         const topPool = smartRecs.slice(0, 10);
@@ -661,10 +947,12 @@
           tier3: tier3 || null,
           tier4: finisher || null
         });
-      };
+        
+        showToast('Session built from your top priorities!', 'success', '💪');
+      }, [showToast]);
 
       // Logging
-      const logWorkout = (exercise, variant, sets) => {
+      const logWorkout = useCallback((exercise, variant, sets) => {
         const newEntry = {
           exercise,
           variant,
@@ -672,6 +960,25 @@
           date: new Date().toISOString(),
           id: Date.now()
         };
+        
+        // Check if this completes a muscle group
+        const currentVolume = calculateCurrentWeekVolume();
+        const ex = exerciseLibrary[exercise];
+        if (ex) {
+          Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
+            if (allMuscles.includes(muscle)) {
+              const newVolume = (currentVolume[muscle] || 0) + (sets * multiplier);
+              const wasIncomplete = currentVolume[muscle] < medTarget;
+              const nowComplete = newVolume >= medTarget;
+              
+              if (wasIncomplete && nowComplete) {
+                triggerConfetti();
+                showToast(`${muscle.charAt(0).toUpperCase() + muscle.slice(1)} target hit! 🎉`, 'celebration', '🎯');
+              }
+            }
+          });
+        }
+        
         setWorkoutHistory(prev => [...prev, newEntry]);
 
         if (majorLifts[exercise]) {
@@ -685,12 +992,26 @@
           ...prev,
           [exercise]: variant
         }));
-      };
+        
+        showToast(`Logged ${sets} sets of ${variant}`, 'success', '✓');
+        
+        // Update personal bests
+        const updatedVolume = { ...currentVolume };
+        if (ex) {
+          Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
+            if (allMuscles.includes(muscle)) {
+              updatedVolume[muscle] = (updatedVolume[muscle] || 0) + (sets * multiplier);
+            }
+          });
+        }
+        updatePersonalBests(updatedVolume);
+      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests]);
 
       // Derived
       const priorities = getMuscleGroupPriorities();
-      const smartRecs = React.useMemo(() => getSmartRecommendations(), [workoutHistory, currentWeekStart, medTarget]);
+      const smartRecs = React.useMemo(() => getSmartRecommendations(), [getSmartRecommendations]);
       const currentWeekVolume = calculateCurrentWeekVolume();
+      const stats = calculateStats();
 
       // Map muscle -> percentage for quick lookup
       const muscleProgress = {};
@@ -724,7 +1045,67 @@
         .filter(([, bucket]) => bucket.exercises.length > 0)
         .sort((a, b) => b[1].score - a[1].score);
 
+      // Current week grade
+      const currentWeekGrade = React.useMemo(() => {
+        const musclesHit = muscleGroups.primary.filter(m => 
+          currentWeekVolume[m] >= medTarget
+        ).length;
+        
+        if (musclesHit === 6) return { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!' };
+        if (musclesHit >= 5) return { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent' };
+        if (musclesHit >= 4) return { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great' };
+        if (musclesHit >= 3) return { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good' };
+        return { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going' };
+      }, [currentWeekVolume, medTarget]);
+
       // Components
+      const ProgressRing = ({ percentage, size = 60, strokeWidth = 6, muscle }) => {
+        const radius = (size - strokeWidth) / 2;
+        const circumference = radius * 2 * Math.PI;
+        const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
+        
+        let colorClass = 'text-red-500';
+        if (percentage >= 100) colorClass = 'text-emerald-500';
+        else if (percentage >= 75) colorClass = 'text-lime-500';
+        else if (percentage >= 50) colorClass = 'text-amber-500';
+        
+        return (
+          <div className="relative inline-flex items-center justify-center">
+            <svg width={size} height={size} className="transform -rotate-90">
+              <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={strokeWidth}
+                className="text-slate-200"
+              />
+              <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+                className={`${colorClass} transition-all duration-500`}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[8px] font-bold text-slate-900 capitalize leading-tight text-center">
+                {muscle.substring(0, 4)}
+              </span>
+              <span className={`text-[9px] font-bold ${colorClass}`}>
+                {Math.round(percentage)}%
+              </span>
+            </div>
+          </div>
+        );
+      };
+
       const ExerciseCard = ({ rec }) => {
         const isExpanded = !!expandedExercises[rec.exercise];
 
@@ -760,7 +1141,6 @@
         };
 
         const hasScore = rec.score !== null && rec.score !== undefined;
-        const movementMeta = movementCategoryMeta[rec.movementCategory] || null;
 
         return (
           <div className={`card-hover rounded-xl overflow-hidden bg-white border transition-all duration-200 ${
@@ -897,17 +1277,14 @@
         const score = bucket.score.toFixed(1);
         const exercises = bucket.exercises.slice(0, 4);
 
-        // Get relevant muscle progress for this category
         const relevantMuscles = [...meta.primaryMuscles, ...meta.accessoryMuscles];
         const muscleProgress = priorities.filter(p => relevantMuscles.includes(p.muscle));
 
-        // Aggregate % progress for this category (use the *least* complete muscle)
         const minPct = muscleProgress.length
           ? Math.min(...muscleProgress.map(p => p.percentage))
           : 0;
 
-        // Map % → colour for the card border / "feel"
-        let borderColor = 'border-rose-400'; // very behind
+        let borderColor = 'border-rose-400';
         if (minPct >= 100) {
           borderColor = 'border-emerald-500';
         } else if (minPct >= 75) {
@@ -954,7 +1331,6 @@
 
             {isExpanded && (
               <div className="category-expand">
-                {/* Progress bars section */}
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     This Week&apos;s Progress
@@ -993,7 +1369,6 @@
                   </div>
                 </div>
 
-                {/* Exercise recommendations */}
                 <div className="p-3 bg-white space-y-2.5">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
                     Recommended Exercises
@@ -1015,29 +1390,66 @@
             <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-indigo-600 to-purple-600"></div>
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative px-6 py-8">
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
                   <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
                     Adaptive Priority Training
                   </h1>
-                  <div className="flex items-center gap-2 text-sm text-white/90">
+                  <div className="flex items-center gap-2 text-sm text-white/90 mb-3">
                     <Activity size={16} />
                     <span className="font-medium">Week {weekNumber}</span>
                     <span className="text-white/60">•</span>
                     <span className="text-white/80">Chaos with guardrails</span>
                   </div>
+                  
+                  {/* Streak display */}
+                  {stats.currentStreak > 0 && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                      <span className="text-lg">🔥</span>
+                      <span className="text-sm font-bold text-white">
+                        {stats.currentStreak} week streak!
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => setCurrentView('settings')}
-                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all active:scale-95"
-                >
-                  <SettingsIcon className="text-white" size={20} />
-                </button>
+                
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={() => setCurrentView('settings')}
+                    className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all active:scale-95"
+                  >
+                    <SettingsIcon className="text-white" size={20} />
+                  </button>
+                  
+                  {/* Week grade badge */}
+                  <div className={`px-4 py-2 rounded-xl bg-gradient-to-r ${currentWeekGrade.color} border-2 border-white/30 backdrop-blur-sm shadow-lg`}>
+                    <div className="text-2xl font-black text-white text-center leading-none mb-0.5">
+                      {currentWeekGrade.grade}
+                    </div>
+                    <div className="text-[9px] font-semibold text-white/90 text-center uppercase tracking-wide">
+                      {currentWeekGrade.label}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress rings */}
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {priorities.filter(p => p.isPrimary).map(p => (
+                  <div key={p.muscle} className="flex-shrink-0">
+                    <ProgressRing 
+                      percentage={p.percentage} 
+                      size={54}
+                      strokeWidth={5}
+                      muscle={p.muscle}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-           {/* Structured session */}
+          {/* Structured session */}
           {structuredSession && (
             <div className="card-hover rounded-xl overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-300 shadow-lg">
               <div className="px-5 py-4 border-b border-indigo-200 bg-white/50 backdrop-blur-sm">
@@ -1096,7 +1508,6 @@
                 })}
             </div>
           </div>
-
 
           {/* Main priorities */}
           {!structuredSession && (
@@ -1170,6 +1581,11 @@
         const sorted = [...workoutHistory].sort(
           (a, b) => new Date(b.date) - new Date(a.date)
         );
+        
+        const avgWorkoutsPerWeek = weeklyVolumes.length > 0
+          ? (workoutHistory.length / weeklyVolumes.length).toFixed(1)
+          : 0;
+        
         return (
           <div className="space-y-5">
             <div className="relative overflow-hidden rounded-2xl shadow-xl">
@@ -1185,6 +1601,100 @@
               </div>
             </div>
 
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md p-4">
+                <div className="text-3xl font-black text-primary-600 mb-1">
+                  {stats.totalWorkouts}
+                </div>
+                <div className="text-xs font-semibold text-slate-600">Total Workouts</div>
+              </div>
+              
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md p-4">
+                <div className="text-3xl font-black text-emerald-600 mb-1">
+                  {stats.totalSets}
+                </div>
+                <div className="text-xs font-semibold text-slate-600">Total Sets</div>
+              </div>
+              
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md p-4">
+                <div className="text-3xl font-black text-purple-600 mb-1">
+                  {stats.currentStreak}
+                </div>
+                <div className="text-xs font-semibold text-slate-600">Week Streak</div>
+              </div>
+              
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md p-4">
+                <div className="text-3xl font-black text-orange-600 mb-1">
+                  {avgWorkoutsPerWeek}
+                </div>
+                <div className="text-xs font-semibold text-slate-600">Workouts/Week</div>
+              </div>
+            </div>
+
+            {/* Personal Bests */}
+            {Object.keys(personalBests).length > 0 && (
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-yellow-50 to-orange-50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🏆</span>
+                    <h2 className="text-lg font-bold text-slate-900">Personal Bests</h2>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">Highest weekly volume per muscle</p>
+                </div>
+                <div className="p-4 grid grid-cols-2 gap-2">
+                  {Object.entries(personalBests)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 6)
+                    .map(([muscle, volume]) => (
+                      <div key={muscle} className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 rounded-lg p-3">
+                        <div className="text-xs font-semibold text-slate-600 capitalize mb-1">
+                          {muscle}
+                        </div>
+                        <div className="text-xl font-black text-orange-600">
+                          {volume.toFixed(1)}
+                        </div>
+                        <div className="text-[10px] text-slate-500">sets/week</div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Achievements */}
+            <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-purple-50 to-pink-50">
+                <div className="flex items-center gap-2">
+                  <Award className="text-purple-600" size={20} />
+                  <h2 className="text-lg font-bold text-slate-900">Achievements</h2>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  {Object.keys(achievements).length} of {Object.keys(achievementDefinitions).length} unlocked
+                </p>
+              </div>
+              <div className="p-4 grid grid-cols-3 gap-3">
+                {Object.entries(achievementDefinitions).map(([key, def]) => {
+                  const unlocked = achievements[key];
+                  return (
+                    <div
+                      key={key}
+                      className={`text-center p-3 rounded-lg border-2 transition-all ${
+                        unlocked
+                          ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-300 achievement-unlock'
+                          : 'bg-slate-50 border-slate-200 opacity-50'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1">{def.icon}</div>
+                      <div className="text-[10px] font-bold text-slate-900 leading-tight">
+                        {def.label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Recent activity */}
             <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
                 <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
@@ -1197,7 +1707,7 @@
                   </div>
                 )}
                 <div className="space-y-2">
-                  {sorted.map(w => {
+                  {sorted.slice(0, 10).map(w => {
                     const d = new Date(w.date);
                     return (
                       <div
@@ -1224,39 +1734,200 @@
         );
       };
 
-      const TrendsView = () => (
-        <div className="space-y-5">
-          <div className="relative overflow-hidden rounded-2xl shadow-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600"></div>
-            <div className="relative px-6 py-8">
-              <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
-                Volume Trends
-              </h1>
-              <div className="flex items-center gap-2 text-sm text-white/90">
-                <Activity size={16} />
-                <span className="font-medium">Long-term progress tracking</span>
+      const TrendsView = () => {
+        const mesocycleAvg = getMesocycleAverage();
+        
+        return (
+          <div className="space-y-5">
+            <div className="relative overflow-hidden rounded-2xl shadow-xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600"></div>
+              <div className="relative px-6 py-8">
+                <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
+                  Mesocycle Trends
+                </h1>
+                <div className="flex items-center gap-2 text-sm text-white/90">
+                  <Activity size={16} />
+                  <span className="font-medium">{weeklyVolumes.length} weeks of data</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
-                Coming Soon
-              </h3>
-              <p className="text-sm text-slate-600">
-                Multi-week mesocycle tracking, chronic deficit detection, and long-term volume trends will appear here.
-              </p>
-            </div>
-            <div className="p-5">
-              <div className="text-center py-12">
-                <Activity className="mx-auto mb-3 text-slate-300" size={48} />
-                <p className="text-slate-600 text-sm">Keep logging workouts to build your trend data!</p>
+            {/* 6-Week Averages */}
+            <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                <h2 className="text-lg font-bold text-slate-900 mb-1">
+                  6-Week Mesocycle Averages
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Chronic deficit = &lt; {(medTarget * 0.8).toFixed(0)} sets/week average
+                </p>
+              </div>
+              
+              <div className="p-5 space-y-4">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                    Primary Compounds
+                  </h3>
+                  {priorities.filter(p => p.isPrimary).map(p => {
+                    const avg = mesocycleAvg[p.muscle] || 0;
+                    const isChronicDeficit = avg < (medTarget * 0.8);
+                    const percentage = (avg / medTarget) * 100;
+                    
+                    return (
+                      <div key={p.muscle} className={`mb-3 p-3 rounded-lg border-2 ${
+                        isChronicDeficit ? 'bg-rose-50 border-rose-300' : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className={`font-bold capitalize ${
+                            isChronicDeficit ? 'text-rose-700' : 'text-slate-800'
+                          }`}>
+                            {p.muscle}
+                            {isChronicDeficit && ' ⚠️'}
+                          </span>
+                          <span className={`text-lg font-bold ${
+                            isChronicDeficit ? 'text-rose-600' :
+                            avg >= medTarget ? 'text-emerald-600' : 'text-amber-600'
+                          }`}>
+                            {avg.toFixed(1)}
+                          </span>
+                        </div>
+                        
+                        <div className="w-full bg-slate-200 rounded-full h-2 mb-2">
+                          <div
+                            className={`progress-bar h-2 rounded-full ${
+                              isChronicDeficit ? 'bg-gradient-to-r from-rose-500 to-red-500' :
+                              percentage >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 
+                              'bg-gradient-to-r from-amber-500 to-orange-500'
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-between text-xs text-slate-600">
+                          <span>6-week average</span>
+                          <span>{percentage.toFixed(0)}% of target</span>
+                        </div>
+                        
+                        {isChronicDeficit && (
+                          <div className="mt-2 text-xs text-rose-700 font-medium">
+                            ⚠️ CHRONIC DEFICIT - Prioritize this muscle!
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                    Accessories
+                  </h3>
+                  {priorities.filter(p => !p.isPrimary).map(p => {
+                    const avg = mesocycleAvg[p.muscle] || 0;
+                    const percentage = (avg / medTarget) * 100;
+                    
+                    return (
+                      <div key={p.muscle} className="mb-3 p-3 rounded-lg border-2 bg-blue-50 border-blue-200">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold capitalize text-blue-800">
+                            {p.muscle}
+                          </span>
+                          <span className={`text-lg font-bold ${
+                            avg >= medTarget ? 'text-emerald-600' : 'text-blue-600'
+                          }`}>
+                            {avg.toFixed(1)}
+                          </span>
+                        </div>
+                        
+                        <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+                          <div
+                            className={`progress-bar h-2 rounded-full ${
+                              percentage >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 
+                              'bg-gradient-to-r from-blue-400 to-cyan-400'
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-between text-xs text-blue-700">
+                          <span>6-week average</span>
+                          <span>{percentage.toFixed(0)}% of target</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
+
+            {/* Week-by-Week History */}
+            {weeklyVolumes.length > 0 && (
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
+                  <h2 className="text-lg font-bold text-slate-900">Week-by-Week Progress</h2>
+                </div>
+                
+                <div className="p-4 space-y-3">
+                  {weeklyVolumes.map((week, index) => {
+                    const weekDate = new Date(week.weekStart);
+                    const isCurrentWeek = weekDate.getTime() === currentWeekStart.getTime();
+                    const weeksAgo = weeklyVolumes.length - index - 1;
+                    
+                    return (
+                      <div key={week.weekStart} className={`p-4 rounded-lg border-2 ${
+                        isCurrentWeek ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="font-bold text-slate-800">
+                              {isCurrentWeek ? 'Current Week' : `${weeksAgo} week${weeksAgo === 1 ? '' : 's'} ago`}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {weekDate.toLocaleDateString()}
+                            </div>
+                          </div>
+                          {week.grade && (
+                            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${week.grade.color} text-white text-sm font-bold`}>
+                              {week.grade.grade}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          {muscleGroups.primary.map(muscle => {
+                            const volume = week.volumes[muscle] || 0;
+                            const metTarget = volume >= medTarget;
+                            
+                            return (
+                              <div key={muscle} className="text-center p-2 bg-white rounded border border-slate-200">
+                                <div className="text-xs capitalize text-slate-600 mb-1">{muscle}</div>
+                                <div className={`font-bold text-sm ${metTarget ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                  {volume.toFixed(1)}
+                                  {metTarget && ' ✓'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {weeklyVolumes.length === 0 && (
+              <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md p-12 text-center">
+                <Activity className="mx-auto mb-3 text-slate-300" size={48} />
+                <h3 className="text-lg font-bold text-slate-700 mb-2">No Trend Data Yet</h3>
+                <p className="text-sm text-slate-600">
+                  Start logging workouts to see your mesocycle trends and identify chronic deficits.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      );
+        );
+      };
 
       const SettingsView = () => (
         <div className="space-y-5">
@@ -1518,6 +2189,21 @@
         );
       };
 
+      const Toast = ({ toast }) => {
+        const bgColor = toast.type === 'achievement' 
+          ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+          : toast.type === 'celebration'
+          ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+          : 'bg-gradient-to-r from-blue-500 to-cyan-500';
+        
+        return (
+          <div className={`toast flex items-center gap-3 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm border border-white/20`}>
+            <span className="text-2xl">{toast.icon}</span>
+            <span className="text-sm font-semibold">{toast.message}</span>
+          </div>
+        );
+      };
+
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-24">
           <div className="max-w-2xl mx-auto px-4 py-6">
@@ -1528,6 +2214,13 @@
           </div>
           <BottomNav />
           <QuickAddModal />
+          
+          {/* Toast container */}
+          <div className="fixed top-4 right-4 z-[100] space-y-2">
+            {toasts.map(toast => (
+              <Toast key={toast.id} toast={toast} />
+            ))}
+          </div>
         </div>
       );
     };
