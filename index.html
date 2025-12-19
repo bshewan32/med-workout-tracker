@@ -149,6 +149,12 @@
         movementCategory: 'press',
         variants: ['Flat Barbell Bench', 'Incline Bench', 'Close Grip Bench', 'Dumbbell Press', 'Machine Press']
       },
+      'Push-ups': {
+        muscles: { chest: 1, triceps: 0.6, core: 0.3 },
+        category: 'primary',
+        movementCategory: 'press',
+        variants: ['Standard Push-ups', 'Wide Grip Push-ups', 'Diamond Push-ups', 'Decline Push-ups', 'Incline Push-ups', 'Archer Push-ups', 'Explosive Push-ups']
+      },
       'Overhead Press': {
         muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
         category: 'primary',
@@ -241,6 +247,24 @@
         category: 'accessory',
         movementCategory: 'pull',
         variants: ['Rope Face Pulls', 'Cable High Row']
+      },
+      'Rear Delt Flyes': {
+        muscles: { shoulders: 1 },
+        category: 'accessory',
+        movementCategory: 'pull',
+        variants: ['Dumbbell Rear Delt Fly', 'Cable Rear Delt Fly', 'Machine Reverse Fly', 'Bent-Over Rear Delt Raise']
+      },
+      'Chest Flyes': {
+        muscles: { chest: 1 },
+        category: 'accessory',
+        movementCategory: 'press',
+        variants: ['Dumbbell Fly', 'Cable Fly', 'Pec Deck Machine', 'Incline Fly', 'Decline Fly']
+      },
+      'Shrugs': {
+        muscles: { upperBack: 1 },
+        category: 'accessory',
+        movementCategory: 'pull',
+        variants: ['Barbell Shrug', 'Dumbbell Shrug', 'Trap Bar Shrug', 'Cable Shrug']
       },
       'Calf Raises': {
         muscles: { calves: 1 },
@@ -602,21 +626,36 @@
         
         // Calculate grades
         weekMap.forEach((data, key) => {
-          const musclesHit = muscleGroups.primary.filter(m => 
-            data.volumes[m] >= medTarget
-          ).length;
+          // Calculate average percentage across all 6 primary muscles
+          let totalPercentage = 0;
+          let musclesHit = 0;
           
-          if (musclesHit === 6) {
-            data.grade = { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!' };
-          } else if (musclesHit >= 5) {
-            data.grade = { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent' };
-          } else if (musclesHit >= 4) {
-            data.grade = { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great' };
-          } else if (musclesHit >= 3) {
-            data.grade = { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good' };
+          muscleGroups.primary.forEach(muscle => {
+            const volume = data.volumes[muscle] || 0;
+            const percentage = (volume / medTarget) * 100;
+            totalPercentage += percentage;
+            
+            if (volume >= medTarget) {
+              musclesHit++;
+            }
+          });
+          
+          const avgPercentage = totalPercentage / muscleGroups.primary.length;
+          
+          // Grade based on average percentage (with bonus for hitting targets)
+          if (avgPercentage >= 100 || musclesHit === 6) {
+            data.grade = { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!', musclesHit };
+          } else if (avgPercentage >= 80 || musclesHit >= 5) {
+            data.grade = { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent', musclesHit };
+          } else if (avgPercentage >= 65 || musclesHit >= 4) {
+            data.grade = { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great', musclesHit };
+          } else if (avgPercentage >= 50 || musclesHit >= 3) {
+            data.grade = { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good', musclesHit };
           } else {
-            data.grade = { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going' };
+            data.grade = { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going', musclesHit };
           }
+          
+          data.avgPercentage = avgPercentage;
         });
         
         const volumes = Array.from(weekMap.values())
@@ -791,11 +830,12 @@
         );
         
         sortedWeeks.forEach((week, index) => {
-          const musclesHit = muscleGroups.primary.filter(m => 
-            week.volumes[m] >= medTarget
-          ).length;
+          // A week counts toward streak if it's a C grade or better (50%+ avg or 3+ muscles hit)
+          const avgPercentage = week.avgPercentage || 0;
+          const musclesHit = week.grade?.musclesHit || 0;
+          const isGoodWeek = avgPercentage >= 50 || musclesHit >= 3;
           
-          if (musclesHit >= 4) { // At least 4 muscles hit = streak continues
+          if (isGoodWeek) {
             tempStreak++;
             bestStreak = Math.max(bestStreak, tempStreak);
             
@@ -809,21 +849,17 @@
         });
         
         const perfectWeeks = weeklyVolumes.filter(week => {
-          const musclesHit = muscleGroups.primary.filter(m => 
-            week.volumes[m] >= medTarget
-          ).length;
-          return musclesHit === 6;
+          return week.grade?.grade === 'S'; // S grade = perfect week
         }).length;
         
         const allMusclesHitWeeks = weeklyVolumes.filter(week => {
-          return allMuscles.every(m => week.volumes[m] >= medTarget);
+          return allMuscles.every(m => (week.volumes[m] || 0) >= medTarget);
         }).length;
         
         const weeksCompleted = weeklyVolumes.filter(week => {
-          const musclesHit = muscleGroups.primary.filter(m => 
-            week.volumes[m] >= medTarget
-          ).length;
-          return musclesHit >= 4;
+          const avgPercentage = week.avgPercentage || 0;
+          const musclesHit = week.grade?.musclesHit || 0;
+          return avgPercentage >= 50 || musclesHit >= 3; // C grade or better
         }).length;
         
         return {
@@ -1103,15 +1139,32 @@
 
       // Current week grade
       const currentWeekGrade = React.useMemo(() => {
-        const musclesHit = muscleGroups.primary.filter(m => 
-          currentWeekVolume[m] >= medTarget
-        ).length;
+        let totalPercentage = 0;
+        let musclesHit = 0;
         
-        if (musclesHit === 6) return { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!' };
-        if (musclesHit >= 5) return { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent' };
-        if (musclesHit >= 4) return { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great' };
-        if (musclesHit >= 3) return { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good' };
-        return { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going' };
+        muscleGroups.primary.forEach(muscle => {
+          const volume = currentWeekVolume[muscle] || 0;
+          const percentage = (volume / medTarget) * 100;
+          totalPercentage += percentage;
+          
+          if (volume >= medTarget) {
+            musclesHit++;
+          }
+        });
+        
+        const avgPercentage = totalPercentage / muscleGroups.primary.length;
+        
+        // Grade based on average percentage (with bonus for hitting targets)
+        if (avgPercentage >= 100 || musclesHit === 6) {
+          return { grade: 'S', color: 'from-purple-500 to-pink-500', label: 'Perfect!', avgPercentage, musclesHit };
+        } else if (avgPercentage >= 80 || musclesHit >= 5) {
+          return { grade: 'A', color: 'from-blue-500 to-cyan-500', label: 'Excellent', avgPercentage, musclesHit };
+        } else if (avgPercentage >= 65 || musclesHit >= 4) {
+          return { grade: 'B', color: 'from-green-500 to-emerald-500', label: 'Great', avgPercentage, musclesHit };
+        } else if (avgPercentage >= 50 || musclesHit >= 3) {
+          return { grade: 'C', color: 'from-yellow-500 to-orange-500', label: 'Good', avgPercentage, musclesHit };
+        }
+        return { grade: 'D', color: 'from-red-500 to-pink-500', label: 'Keep Going', avgPercentage, musclesHit };
       }, [currentWeekVolume, medTarget]);
 
       // Components
@@ -1492,6 +1545,11 @@
                     <div className="text-[9px] font-semibold text-white/90 text-center uppercase tracking-wide">
                       {currentWeekGrade.label}
                     </div>
+                    {currentWeekGrade.avgPercentage !== undefined && (
+                      <div className="text-[8px] font-bold text-white/80 text-center mt-0.5">
+                        {Math.round(currentWeekGrade.avgPercentage)}% avg
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1950,8 +2008,15 @@
                             </div>
                           </div>
                           {week.grade && (
-                            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${week.grade.color} text-white text-sm font-bold`}>
-                              {week.grade.grade}
+                            <div className="text-right">
+                              <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${week.grade.color} text-white text-sm font-bold mb-1`}>
+                                {week.grade.grade}
+                              </div>
+                              {week.avgPercentage !== undefined && (
+                                <div className="text-xs text-slate-500">
+                                  {Math.round(week.avgPercentage)}% avg
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -2053,7 +2118,7 @@
                   <p>
                     <strong className="text-slate-900">Adaptive Priority Training</strong> focuses on the Big 6 primary muscles 
                     (chest, lats, upper back, quads, glutes, hamstrings) while organizing exercises by movement categories 
-                    (Press, Pull, Squat, Posterior Chain). Work in a rep range that feels good and finish each set with 1-3 reps in the tank.
+                    (Press, Pull, Squat, Posterior Chain).
                   </p>
                   <p>
                     Accessories are tracked and surfaced when needed—giving you flexibility to address gaps by choice, not algorithm.
