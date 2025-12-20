@@ -289,6 +289,13 @@
         category: 'accessory',
         movementCategory: 'posterior',
         variants: ['Back Extensions', 'Reverse Hyper']
+      },
+      'Loaded Carries': {
+        muscles: { upperBack: 0.6, core: 1, glutes: 0.4 },
+        category: 'accessory',
+        movementCategory: 'accessory',
+        variants: ['Farmers Walk', 'Suitcase Carry', 'Overhead Carry', 'Waiter Walk', 'Trap Bar Carry'],
+        isBonus: true
       }
     };
 
@@ -316,17 +323,17 @@
     const movementCategoryMeta = {
       pull: {
         label: 'Pull',
-        subtitle: 'Back & Lat Development',
-        description: 'Rows, pulldowns, and pull-up variations',
+        subtitle: 'Vertical & Horizontal Pulling',
+        description: 'Pull-ups, rows, and pulldown variations',
         icon: '💪',
         gradient: 'from-blue-500 to-cyan-500',
         primaryMuscles: ['lats', 'upperBack'],
         accessoryMuscles: ['biceps']
       },
       squat: {
-        label: 'Squat',
-        subtitle: 'Knee-Dominant Lower',
-        description: 'Squats, lunges, and leg press variations',
+        label: 'Squat / Single-Leg',
+        subtitle: 'Knee-Dominant Lower Body',
+        description: 'Squats, leg press, lunges, split squats, step-ups',
         icon: '🦵',
         gradient: 'from-purple-500 to-pink-500',
         primaryMuscles: ['quads', 'glutes'],
@@ -334,17 +341,17 @@
       },
       press: {
         label: 'Press',
-        subtitle: 'Chest & Shoulder Pressing',
-        description: 'Bench press and overhead pressing movements',
+        subtitle: 'Horizontal & Vertical Pressing',
+        description: 'Bench press, overhead press, push-ups, dips',
         icon: '💥',
         gradient: 'from-orange-500 to-red-500',
         primaryMuscles: ['chest'],
         accessoryMuscles: ['shoulders', 'triceps']
       },
       posterior: {
-        label: 'Posterior Chain',
-        subtitle: 'Hip-Dominant Power',
-        description: 'Deadlifts, hip thrusts, and hamstring work',
+        label: 'Hip-Dominant',
+        subtitle: 'Posterior Chain Power',
+        description: 'Deadlifts, RDLs, hip thrusts, hamstring curls',
         icon: '⚡',
         gradient: 'from-emerald-500 to-teal-500',
         primaryMuscles: ['glutes', 'hamstrings'],
@@ -545,6 +552,7 @@
       const [quickAddExercise, setQuickAddExercise] = useState('');
       const [quickAddVariant, setQuickAddVariant] = useState('');
       const [quickAddSets, setQuickAddSets] = useState(3);
+      const [showPhilosophy, setShowPhilosophy] = useState(false);
       
       const [currentWeekStart] = useState(() => getWeekStart());
       const [mesocycleStart] = useState(() => {
@@ -1425,8 +1433,8 @@
                     <h3 className="text-base font-bold">{meta.label}</h3>
                   </div>
                   <p className="text-xs text-white/90 mb-1">{meta.subtitle}</p>
-                  <p className="text-xs text-white/75">{meta.description}</p>
-                  <p className="text-[10px] text-white/80 mt-1">
+                  <p className="text-[11px] text-white/75 leading-relaxed">{meta.description}</p>
+                  <p className="text-[10px] text-white/80 mt-1.5">
                     Weekly progress: {Math.round(minPct)}%
                   </p>
                 </div>
@@ -1570,6 +1578,61 @@
             </div>
           </div>
 
+          {/* Philosophy Info Strip */}
+          <div className="card-hover rounded-xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 shadow-md overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowPhilosophy(!showPhilosophy)}
+              className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-white/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">💡</span>
+                <span className="text-sm font-bold text-indigo-900">
+                  How does this work?
+                </span>
+              </div>
+              <div className={`transform transition-transform ${showPhilosophy ? 'rotate-180' : ''}`}>
+                <ChevronDown className="text-indigo-600" />
+              </div>
+            </button>
+            
+            {showPhilosophy && (
+              <div className="px-4 pb-4 pt-2 space-y-3 text-sm text-indigo-900 bg-white/40">
+                <div>
+                  <p className="font-semibold mb-1">Do I need squats and deadlifts?</p>
+                  <p className="text-indigo-800 leading-relaxed">
+                    No. Choose any movements you like. As long as you cover each pattern during the week, 
+                    you're on track. Squats and deadlifts are just efficient shortcuts — not requirements.
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="font-semibold mb-1">What are the movement patterns?</p>
+                  <p className="text-indigo-800 leading-relaxed">
+                    <strong>Press</strong> (chest/shoulders), <strong>Pull</strong> (back), 
+                    <strong>Squat/Single-Leg</strong> (quads), and <strong>Hip-Dominant</strong> (glutes/hamstrings). 
+                    Cover these weekly with any exercises you want.
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="font-semibold mb-1">Why recommendations change</p>
+                  <p className="text-indigo-800 leading-relaxed">
+                    The app tracks which muscles need work this week and suggests exercises that fill those gaps. 
+                    You can follow the suggestions or completely ignore them — it's chaos with guardrails, not a program.
+                  </p>
+                </div>
+                
+                <div className="pt-2 border-t border-indigo-200">
+                  <p className="text-xs text-indigo-700 italic">
+                    💪 <strong>MED = Minimum Effective Dose</strong> — the least amount of work needed to progress. 
+                    Hit your weekly targets however you want, then move on with life.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Structured session */}
           {structuredSession && (
             <div className="card-hover rounded-xl overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-300 shadow-lg">
@@ -1644,7 +1707,7 @@
                     </h2>
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    Movement categories ranked by weekly need. Tap to expand and see progress + exercises.
+                    Movement categories ranked by weekly need. These suggestions adapt based on what you've already done this week.
                   </p>
                 </div>
 
@@ -1691,6 +1754,30 @@
                     <Plus size={20} />
                     <span>Add Accessory Exercise</span>
                   </button>
+                  
+                  {/* Bonus Exercises Section */}
+                  <div className="mt-6 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl">
+                    <div className="flex items-start gap-2 mb-2">
+                      <span className="text-xl">🎁</span>
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-900">Optional Finishers</h3>
+                        <p className="text-xs text-orange-800 mt-1 leading-relaxed">
+                          Great for extra core, grip, or conditioning — no weekly minimum required.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-orange-700 bg-white/60 rounded-lg p-2">
+                        <strong>Loaded Carries</strong> — Farmers walks, suitcase carries, overhead walks
+                      </div>
+                      <div className="text-xs text-orange-700 bg-white/60 rounded-lg p-2">
+                        <strong>Conditioning</strong> — Burpees, battle ropes, sled work
+                      </div>
+                      <div className="text-xs text-orange-700 bg-white/60 rounded-lg p-2">
+                        <strong>Mobility</strong> — Stretching, yoga, foam rolling
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
@@ -2116,12 +2203,22 @@
                 <h3 className="text-sm font-bold text-slate-900 mb-2">Training Philosophy</h3>
                 <div className="prose prose-sm text-slate-600 leading-relaxed space-y-2">
                   <p>
-                    <strong className="text-slate-900">Adaptive Priority Training</strong> focuses on the Big 6 primary muscles 
-                    (chest, lats, upper back, quads, glutes, hamstrings) while organizing exercises by movement categories 
-                    (Press, Pull, Squat, Posterior Chain).
+                    <strong className="text-slate-900">Adaptive Priority Training</strong> uses movement patterns, not specific exercises.
                   </p>
                   <p>
-                    Accessories are tracked and surfaced when needed—giving you flexibility to address gaps by choice, not algorithm.
+                    The four patterns — <strong>Press</strong>, <strong>Pull</strong>, <strong>Squat/Single-Leg</strong>, 
+                    and <strong>Hip-Dominant</strong> — cover the Big 6 primary muscles (chest, lats, upper back, quads, glutes, hamstrings).
+                  </p>
+                  <p>
+                    <strong className="text-slate-900">You choose the exercises.</strong> Bench or push-ups? Squats or leg press? 
+                    The app tracks patterns, not prescriptions.
+                  </p>
+                  <p>
+                    Accessories (shoulders, arms, calves, core) are tracked and surfaced when needed — giving you flexibility 
+                    to address gaps by choice, not algorithm.
+                  </p>
+                  <p className="text-xs italic text-slate-500 pt-2 border-t border-slate-200">
+                    💡 This is chaos with guardrails: daily flexibility with weekly balance.
                   </p>
                 </div>
               </div>
@@ -2183,8 +2280,8 @@
 
         const accessoryExercises = Object.entries(exerciseLibrary)
           .filter(([_, data]) => data.category === 'accessory')
-          .map(([name]) => name)
-          .sort();
+          .map(([name, data]) => ({ name, isBonus: data.isBonus }))
+          .sort((a, b) => a.name.localeCompare(b.name));
 
         const selectedData = quickAddExercise
           ? exerciseLibrary[quickAddExercise]
@@ -2244,9 +2341,9 @@
                     className="w-full border-2 border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 bg-white transition-all"
                   >
                     <option value="">Select an accessory...</option>
-                    {accessoryExercises.map(name => (
+                    {accessoryExercises.map(({ name, isBonus }) => (
                       <option key={name} value={name}>
-                        {name}
+                        {name}{isBonus ? ' 🎁 (bonus)' : ''}
                       </option>
                     ))}
                   </select>
