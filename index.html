@@ -154,10 +154,7 @@
           'Dumbbell Press',
           'Machine Press',
           'Push-ups',
-          'Wide Grip Push-ups',
-          'Diamond Push-ups',
-          'Decline Push-ups',
-          'Incline Push-ups'
+          'Deficit Push-ups',
         ]
       },
       'Overhead Press': {
@@ -204,7 +201,25 @@
         muscles: { glutes: 1, hamstrings: 0.5 },
         category: 'primary',
         movementCategory: 'posterior',
-        variants: ['Barbell Hip Thrust', 'Dumbbell Hip Thrust', 'Single-Leg Hip Thrust']
+        variants: ['Barbell Hip Thrust', 'Dumbbell Hip Thrust', 'Single-Leg Hip Thrust', 'Banded Hip Thrust', 'Smith Machine Hip Thrust']
+      },
+      'Glute Bridges': {
+        muscles: { glutes: 1, hamstrings: 0.4 },
+        category: 'primary',
+        movementCategory: 'posterior',
+        variants: ['Glute Bridge', 'Single-Leg Glute Bridge', 'Banded Glute Bridge', 'Elevated Glute Bridge', 'Barbell Glute Bridge']
+      },
+      'Cable Kickbacks': {
+        muscles: { glutes: 1 },
+        category: 'accessory',
+        movementCategory: 'posterior',
+        variants: ['Cable Glute Kickback', 'Donkey Kicks', 'Fire Hydrants', 'Standing Kickback']
+      },
+      'Hip Abduction': {
+        muscles: { glutes: 1 },
+        category: 'accessory',
+        movementCategory: 'posterior',
+        variants: ['Abduction Machine', 'Banded Hip Abduction', 'Side-Lying Hip Abduction', 'Standing Cable Abduction']
       },
       'Leg Curls': {
         muscles: { hamstrings: 1 },
@@ -549,6 +564,7 @@
       const [selectedVariants, setSelectedVariants] = useState({});
       const [setSets, setSetSets] = useState({});
       const [structuredSession, setStructuredSession] = useState(null);
+      const [sessionProgress, setSessionProgress] = useState({});
       const [toasts, setToasts] = useState([]);
       const [showAlmostDone, setShowAlmostDone] = useState(false);
       const [almostDoneSuggestions, setAlmostDoneSuggestions] = useState([]);
@@ -1015,6 +1031,8 @@
           tier4: finisher || null
         });
         
+        setSessionProgress({}); // Reset progress for new session
+        
         showToast('Session built from your top priorities!', 'success', '💪');
       }, [smartRecs, accessoryNeeds, showToast, getExercisesDoneThisWeek]);
 
@@ -1059,6 +1077,35 @@
           ...prev,
           [exercise]: variant
         }));
+        
+        // Track session progress
+        if (structuredSession) {
+          setSessionProgress(prev => {
+            const updated = { ...prev, [exercise]: true };
+            
+            // Check if all session exercises are complete
+            const allExercises = [
+              structuredSession.tier1?.exercise,
+              structuredSession.tier2?.exercise,
+              structuredSession.tier3?.exercise,
+              structuredSession.tier4?.exercise
+            ].filter(Boolean);
+            
+            const allComplete = allExercises.every(ex => updated[ex]);
+            
+            if (allComplete && !prev._celebrated) {
+              // Trigger "As Rx'd!" celebration
+              setTimeout(() => {
+                triggerConfetti();
+                triggerConfetti(); // Double confetti!
+                showToast('Session Complete - As Rx\'d! 💪🔥', 'celebration', '🏆');
+              }, 500);
+              updated._celebrated = true;
+            }
+            
+            return updated;
+          });
+        }
         
         showToast(`Logged ${sets} sets of ${variant}`, 'success', '✓');
         
@@ -1110,7 +1157,7 @@
             setShowAlmostDone(true);
           }
         }, 1000); // Small delay so confetti/toasts appear first
-      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests]);
+      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests, structuredSession]);
 
       // Derived
       const priorities = getMuscleGroupPriorities();
@@ -1642,7 +1689,7 @@
           {structuredSession && (
             <div className="card-hover rounded-xl overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-300 shadow-lg">
               <div className="px-5 py-4 border-b border-indigo-200 bg-white/50 backdrop-blur-sm">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="text-lg font-bold text-indigo-900 mb-1">
                       {structuredSession.lift} Session
@@ -1651,19 +1698,82 @@
                       Built from your top priorities—ready to crush it! 💪
                     </p>
                   </div>
-                  <button
-                    onClick={() => setStructuredSession(null)}
-                    className="px-3 py-1.5 text-xs font-semibold border-2 border-indigo-300 rounded-lg hover:bg-indigo-100 text-indigo-800 transition-all active:scale-95"
-                  >
-                    Clear
-                  </button>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-indigo-700 mb-1">
+                    <span className="font-semibold">Progress</span>
+                    <span>
+                      {Object.values(sessionProgress).filter(v => v === true).length}/
+                      {[structuredSession.tier1, structuredSession.tier2, structuredSession.tier3, structuredSession.tier4].filter(Boolean).length} exercises
+                    </span>
+                  </div>
+                  <div className="w-full bg-indigo-100 rounded-full h-2">
+                    <div
+                      className="progress-bar h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                      style={{
+                        width: `${(Object.values(sessionProgress).filter(v => v === true).length / 
+                          [structuredSession.tier1, structuredSession.tier2, structuredSession.tier3, structuredSession.tier4].filter(Boolean).length) * 100}%`
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
+              
               <div className="p-4 space-y-3">
-                <ExerciseCard rec={structuredSession.tier1} />
-                {structuredSession.tier2 && <ExerciseCard rec={structuredSession.tier2} />}
-                {structuredSession.tier3 && <ExerciseCard rec={structuredSession.tier3} />}
-                {structuredSession.tier4 && <ExerciseCard rec={structuredSession.tier4} />}
+                {structuredSession.tier1 && (
+                  <div className="relative">
+                    {sessionProgress[structuredSession.tier1.exercise] && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                        <CheckCircle size={20} />
+                      </div>
+                    )}
+                    <ExerciseCard rec={structuredSession.tier1} />
+                  </div>
+                )}
+                {structuredSession.tier2 && (
+                  <div className="relative">
+                    {sessionProgress[structuredSession.tier2.exercise] && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                        <CheckCircle size={20} />
+                      </div>
+                    )}
+                    <ExerciseCard rec={structuredSession.tier2} />
+                  </div>
+                )}
+                {structuredSession.tier3 && (
+                  <div className="relative">
+                    {sessionProgress[structuredSession.tier3.exercise] && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                        <CheckCircle size={20} />
+                      </div>
+                    )}
+                    <ExerciseCard rec={structuredSession.tier3} />
+                  </div>
+                )}
+                {structuredSession.tier4 && (
+                  <div className="relative">
+                    {sessionProgress[structuredSession.tier4.exercise] && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-green-500 text-white rounded-full p-1 shadow-lg">
+                        <CheckCircle size={20} />
+                      </div>
+                    )}
+                    <ExerciseCard rec={structuredSession.tier4} />
+                  </div>
+                )}
+              </div>
+              
+              <div className="px-4 pb-4">
+                <button
+                  onClick={() => {
+                    setStructuredSession(null);
+                    setSessionProgress({});
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-sm transition-all active:scale-98 shadow-md"
+                >
+                  {sessionProgress._celebrated ? '🏆 Session Complete - Close' : 'Finish Session'}
+                </button>
               </div>
             </div>
           )}
