@@ -154,7 +154,14 @@
           'Dumbbell Press',
           'Machine Press',
           'Push-ups',
+          'Wide Grip Push-ups',
+          'Diamond Push-ups',
+          'Decline Push-ups',
+          'Incline Push-ups',
+          'Archer Push-ups',
+          'Explosive Push-ups',
           'Deficit Push-ups',
+          'Weighted Push-ups'
         ]
       },
       'Overhead Press': {
@@ -543,10 +550,6 @@
         const saved = localStorage.getItem('medApp_medTarget');
         return saved ? parseInt(saved) : 10;
       });
-      const [strengthCycleDays, setStrengthCycleDays] = useState(() => {
-        const saved = localStorage.getItem('medApp_strengthCycleDays');
-        return saved ? parseInt(saved) : 14;
-      });
       const [lastUsedVariants, setLastUsedVariants] = useState(() => {
         const saved = localStorage.getItem('medApp_lastUsedVariants');
         return saved ? JSON.parse(saved) : {};
@@ -591,9 +594,6 @@
       useEffect(() => {
         localStorage.setItem('medApp_medTarget', medTarget.toString());
       }, [medTarget]);
-      useEffect(() => {
-        localStorage.setItem('medApp_strengthCycleDays', strengthCycleDays.toString());
-      }, [strengthCycleDays]);
       useEffect(() => {
         localStorage.setItem('medApp_lastUsedVariants', JSON.stringify(lastUsedVariants));
       }, [lastUsedVariants]);
@@ -2268,74 +2268,159 @@
                 Settings
               </h1>
               <p className="text-sm text-white/80">
-                Customize your MED targets and training preferences
+                Customize your training targets
               </p>
             </div>
           </div>
 
           <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-lg font-bold text-slate-900">Training Parameters</h2>
+              <h2 className="text-lg font-bold text-slate-900">How many sets do I need?</h2>
             </div>
-            <div className="p-5 space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2">
-                  MED Target (sets per muscle per week)
-                </label>
-                <input
-                  type="number"
-                  min="4"
-                  max="20"
-                  value={medTarget}
-                  onChange={e => setMedTarget(Number(e.target.value) || medTarget)}
-                  className="w-32 border-2 border-slate-300 rounded-lg px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 transition-all"
-                />
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                  Minimum Effective Dose for both primary and accessory muscles. Research suggests 8-12 sets/week for optimal growth.
-                </p>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Choose your <strong>weekly volume target</strong> per muscle group. This is your Minimum Effective Dose (MED).
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setMedTarget(5)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    medTarget === 5 
+                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold text-lg text-slate-900">Maintenance</div>
+                    <div className="font-black text-xl text-blue-600">5 sets</div>
+                  </div>
+                  <div className="text-sm text-slate-700 mb-2">
+                    Maintain muscle with minimal time investment
+                  </div>
+                  <div className="text-xs text-slate-500 italic">
+                    Great for busy periods or deload weeks
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setMedTarget(10)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    medTarget === 10 
+                      ? 'border-emerald-500 bg-emerald-50 shadow-md' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold text-lg text-slate-900">Growth (Recommended)</div>
+                    <div className="font-black text-xl text-emerald-600">10 sets</div>
+                  </div>
+                  <div className="text-sm text-slate-700 mb-2">
+                    Optimal for most people seeking muscle growth
+                  </div>
+                  <div className="text-xs text-slate-500 italic">
+                    Research-backed "sweet spot" for hypertrophy (Schoenfeld et al., 2017)
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setMedTarget(15)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    medTarget === 15 
+                      ? 'border-purple-500 bg-purple-50 shadow-md' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold text-lg text-slate-900">Advanced Volume</div>
+                    <div className="font-black text-xl text-purple-600">15 sets</div>
+                  </div>
+                  <div className="text-sm text-slate-700 mb-2">
+                    Maximum adaptive volume for experienced lifters
+                  </div>
+                  <div className="text-xs text-slate-500 italic">
+                    Approaching maximum recoverable volume (MRV) for most people
+                  </div>
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-900 mb-2">
-                  Strength Cycle (days)
-                </label>
-                <input
-                  type="number"
-                  min="7"
-                  max="30"
-                  value={strengthCycleDays}
-                  onChange={e =>
-                    setStrengthCycleDays(Number(e.target.value) || strengthCycleDays)
-                  }
-                  className="w-32 border-2 border-slate-300 rounded-lg px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 transition-all"
-                />
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                  Frequency for practicing main lifts (Squat, Bench, Deadlift). Keep motor patterns sharp every 7-21 days.
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-900 leading-relaxed">
+                  <strong>Research note:</strong> Studies show 10-20 sets per muscle per week optimizes hypertrophy for most trained individuals 
+                  (Schoenfeld et al., 2017; Baz-Valle et al., 2022). Individual response varies—start at 10 and adjust based on recovery.
                 </p>
               </div>
+            </div>
+          </div>
 
-              <div className="border-t border-slate-200 pt-6">
-                <h3 className="text-sm font-bold text-slate-900 mb-2">Training Philosophy</h3>
-                <div className="prose prose-sm text-slate-600 leading-relaxed space-y-2">
-                  <p>
-                    <strong className="text-slate-900">Adaptive Priority Training</strong> uses movement patterns, not specific exercises.
-                  </p>
-                  <p>
-                    The four patterns — <strong>Press</strong>, <strong>Pull</strong>, <strong>Squat/Single-Leg</strong>, 
-                    and <strong>Hip-Dominant</strong> — cover the Big 6 primary muscles (chest, lats, upper back, quads, glutes, hamstrings).
-                  </p>
-                  <p>
-                    <strong className="text-slate-900">You choose the exercises.</strong> Bench or push-ups? Squats or leg press? 
-                    The app tracks patterns, not prescriptions.
-                  </p>
-                  <p>
-                    Accessories (shoulders, arms, calves, core) are tracked and surfaced when needed — giving you flexibility 
-                    to address gaps by choice, not algorithm.
-                  </p>
-                  <p className="text-xs italic text-slate-500 pt-2 border-t border-slate-200">
-                    💡 This is chaos with guardrails: daily flexibility with weekly balance.
-                  </p>
+          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-lg font-bold text-slate-900">How many reps should I do?</h2>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed mb-4">
+                <strong>Short answer:</strong> Do what feels good. Anything above 5 reps works for most goals.
+              </p>
+              
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="font-semibold text-slate-900 mb-1">5-8 reps</div>
+                  <div className="text-xs">Strength-focused with good hypertrophy</div>
                 </div>
+                
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="font-semibold text-slate-900 mb-1">8-12 reps</div>
+                  <div className="text-xs">Classic hypertrophy range (most popular)</div>
+                </div>
+                
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="font-semibold text-slate-900 mb-1">12-20 reps</div>
+                  <div className="text-xs">Great for muscle growth with less joint stress</div>
+                </div>
+                
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="font-semibold text-slate-900 mb-1">20+ reps</div>
+                  <div className="text-xs">Metabolic work, endurance, "pump" training</div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-amber-900 leading-relaxed mb-2">
+                  <strong>The science:</strong> Hypertrophy occurs across a wide rep range (5-30+) when sets are taken close to failure 
+                  (Schoenfeld et al., 2021). The "best" rep range is the one you can do consistently.
+                </p>
+                <p className="text-xs text-amber-900 leading-relaxed">
+                  <strong>Practical tip:</strong> Mix rep ranges throughout the week. Heavy squats (5-8), moderate bench (8-12), 
+                  higher-rep accessories (12-20). Variety prevents adaptation and keeps training interesting.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-lg font-bold text-slate-900">Training Philosophy</h2>
+            </div>
+            <div className="p-5">
+              <div className="prose prose-sm text-slate-600 leading-relaxed space-y-3">
+                <p>
+                  <strong className="text-slate-900">Adaptive Priority Training</strong> uses movement patterns, not specific exercises.
+                </p>
+                <p>
+                  The four patterns — <strong>Press</strong>, <strong>Pull</strong>, <strong>Squat/Single-Leg</strong>, 
+                  and <strong>Hip-Dominant</strong> — cover the Big 6 primary muscles (chest, lats, upper back, quads, glutes, hamstrings).
+                </p>
+                <p>
+                  <strong className="text-slate-900">You choose the exercises.</strong> Bench or push-ups? Squats or leg press? 
+                  The app tracks patterns, not prescriptions.
+                </p>
+                <p>
+                  Accessories (shoulders, arms, calves, core) are tracked and surfaced when needed — giving you flexibility 
+                  to address gaps by choice, not algorithm.
+                </p>
+                <p className="text-xs italic text-slate-500 pt-2 border-t border-slate-200">
+                  💡 This is chaos with guardrails: daily flexibility with weekly balance.
+                </p>
               </div>
             </div>
           </div>
