@@ -505,11 +505,10 @@
     // Helpers
     const getWeekStart = (date = new Date()) => {
       const d = new Date(date);
-      const day = d.getDay();
-      const diff = d.getDate() - day;
-      const weekStart = new Date(d.setDate(diff));
-      weekStart.setHours(0, 0, 0, 0);
-      return weekStart;
+      const day = (d.getDay() + 6) % 7; // Monday=0, Sunday=6
+      d.setDate(d.getDate() - day);
+      d.setHours(0, 0, 0, 0);
+      return d;
     };
 
     const daysBetween = (a, b) => {
@@ -577,6 +576,12 @@
       const [quickAddVariant, setQuickAddVariant] = useState('');
       const [quickAddSets, setQuickAddSets] = useState(3);
       const [showPhilosophy, setShowPhilosophy] = useState(false);
+      const [showQuickStart, setShowQuickStart] = useState(false);
+      const [showFirstLoadModal, setShowFirstLoadModal] = useState(() => {
+        const hasSeenModal = localStorage.getItem('medApp_hasSeenOnboarding');
+        const hasWorkouts = localStorage.getItem('medApp_workoutHistory');
+        return !hasSeenModal && (!hasWorkouts || hasWorkouts === '[]');
+      });
       
       const [currentWeekStart] = useState(() => getWeekStart());
       const [mesocycleStart] = useState(() => {
@@ -1171,11 +1176,6 @@
         muscleProgress[p.muscle] = p.percentage;
       });
 
-      const weekNumber =
-        Math.floor(
-          (new Date() - currentWeekStart) / (1000 * 60 * 60 * 24 * 7)
-        ) + 1;
-
       const accessoryNeeds = priorities
         .filter(p => !p.isPrimary && p.remaining > 0)
         .sort((a, b) => b.remaining - a.remaining)
@@ -1573,10 +1573,11 @@
                   </h1>
                   <div className="flex items-center gap-2 text-sm text-white/90 mb-3">
                     <Activity size={16} />
-                    <span className="font-medium">Week {weekNumber}</span>
-                    <span className="text-white/60">•</span>
-                    <span className="text-white/80">Chaos with guardrails</span>
+                    <span className="font-medium">This Week</span>
                   </div>
+                  <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                    Chaos with guardrails: cover Press / Pull / Squat / Hip-Dominant across the week — everything else is flexible.
+                  </p>
                   
                   {/* Streak display */}
                   {stats.currentStreak > 0 && (
@@ -1668,6 +1669,17 @@
                 </div>
                 
                 <div>
+                  <p className="font-semibold mb-1">Exercise rotation</p>
+                  <p className="text-indigo-800 leading-relaxed mb-2">
+                    Keep it interesting: rotate exercises across the week. <strong>Keep the pattern, change the tool</strong> 
+                    (barbell → dumbbell → machine → bodyweight).
+                  </p>
+                  <p className="text-indigo-800 leading-relaxed">
+                    Heavy early. Easier later. Same pattern. If you did barbell bench Monday, try machine press or push-ups later in the week.
+                  </p>
+                </div>
+                
+                <div>
                   <p className="font-semibold mb-1">Why recommendations change</p>
                   <p className="text-indigo-800 leading-relaxed">
                     The app tracks which muscles need work this week and suggests exercises that fill those gaps. 
@@ -1680,6 +1692,58 @@
                     💪 <strong>MED = Minimum Effective Dose</strong> — the least amount of work needed to progress. 
                     Hit your weekly targets however you want, then move on with life.
                   </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Start Card */}
+          <div className="card-hover rounded-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowQuickStart(!showQuickStart)}
+              className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-white/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🚀</span>
+                <span className="text-sm font-bold text-emerald-900">
+                  Quick Start Guide
+                </span>
+              </div>
+              <div className={`transform transition-transform ${showQuickStart ? 'rotate-180' : ''}`}>
+                <ChevronDown className="text-emerald-600" />
+              </div>
+            </button>
+            
+            {showQuickStart && (
+              <div className="px-4 pb-4 pt-2 text-sm text-emerald-900 bg-white/40">
+                <p className="text-emerald-800 mb-3 leading-relaxed">
+                  Don't overthink it — the app adapts after 1–2 weeks of logs.
+                </p>
+                <ul className="space-y-2 text-emerald-800">
+                  <li className="flex gap-2">
+                    <span className="font-bold min-w-[70px]">Days:</span>
+                    <span>Aim for 3–5 training days/week (or whenever you can)</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold min-w-[70px]">Session:</span>
+                    <span>2–4 exercises, 2–4 sets each</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold min-w-[70px]">Reps:</span>
+                    <span>5–30 works. Compounds: 6–12. Accessories: 10–20.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold min-w-[70px]">Effort:</span>
+                    <span>Higher weekly volume = leave 1–2 reps in reserve on big lifts</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-bold min-w-[70px]">Rotation:</span>
+                    <span>Keep the pattern, rotate the tool (barbell → DB → machine → push-ups)</span>
+                  </li>
+                </ul>
+                <div className="text-xs text-emerald-700 italic border-t border-emerald-200 pt-3 mt-3">
+                  💡 Goal: cover Press / Pull / Squat / Hip-Dominant across the week — everything else is flexible.
                 </div>
               </div>
             )}
@@ -2723,6 +2787,105 @@
         );
       };
 
+      // First Load Modal
+      const FirstLoadModal = () => {
+        if (!showFirstLoadModal) return null;
+        
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+              <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 px-6 py-8 text-center">
+                <div className="text-5xl mb-3">💪</div>
+                <h2 className="text-2xl font-black text-white mb-2">
+                  Welcome to MED Tracker
+                </h2>
+                <p className="text-white/90 text-sm leading-relaxed">
+                  Adaptive Priority Training: flexible workouts, weekly balance
+                </p>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 mb-3">Quick Start</h3>
+                  <ul className="text-sm text-slate-700 space-y-2 list-disc pl-5">
+                    <li>Train 3–5 days per week (or whenever you can)</li>
+                    <li>Pick 2–4 exercises per session, 2–4 sets each</li>
+                    <li>Cover Press / Pull / Squat / Hip-Dominant across the week</li>
+                  </ul>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h3 className="font-bold text-slate-900 mb-3">Choose Your Weekly Target</h3>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Sets per muscle group per week (you can change this later)
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setMedTarget(5);
+                        localStorage.setItem('medApp_hasSeenOnboarding', 'true');
+                        setShowFirstLoadModal(false);
+                        setShowQuickStart(true); // Auto-open Quick Start after onboarding
+                      }}
+                      className="w-full text-left p-3 rounded-lg border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-slate-900">Maintenance</div>
+                          <div className="text-xs text-slate-600">Busy schedule</div>
+                        </div>
+                        <div className="font-black text-blue-600 text-lg">5 sets</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setMedTarget(10);
+                        localStorage.setItem('medApp_hasSeenOnboarding', 'true');
+                        setShowFirstLoadModal(false);
+                        setShowQuickStart(true);
+                      }}
+                      className="w-full text-left p-3 rounded-lg border-2 border-emerald-400 bg-emerald-50 hover:border-emerald-500 transition-all"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-slate-900">Growth ⭐</div>
+                          <div className="text-xs text-slate-600">Recommended</div>
+                        </div>
+                        <div className="font-black text-emerald-600 text-lg">10 sets</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setMedTarget(15);
+                        localStorage.setItem('medApp_hasSeenOnboarding', 'true');
+                        setShowFirstLoadModal(false);
+                        setShowQuickStart(true);
+                      }}
+                      className="w-full text-left p-3 rounded-lg border-2 border-slate-200 hover:border-purple-400 hover:bg-purple-50 transition-all"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-slate-900">Advanced</div>
+                          <div className="text-xs text-slate-600">Experienced lifter</div>
+                        </div>
+                        <div className="font-black text-purple-600 text-lg">15 sets</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-slate-500 italic text-center pt-2">
+                  💡 The app learns your patterns and adapts recommendations as you log workouts
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-24">
           <div className="max-w-2xl mx-auto px-4 py-6">
@@ -2734,6 +2897,7 @@
           <BottomNav />
           <QuickAddModal />
           <AlmostDoneModal />
+          <FirstLoadModal />
           
           {/* Toast container */}
           <div className="fixed top-4 right-4 z-[100] space-y-2">
