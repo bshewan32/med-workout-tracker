@@ -1699,52 +1699,64 @@
               </div>
             </button>
             
-            {showPhilosophy && (
-              <div className="px-4 pb-4 pt-2 space-y-3 text-sm text-indigo-900 bg-white/40">
-                <div>
-                  <p className="font-semibold mb-1">Do I have to do the recommended exercises?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    No. Choose any movements you like. As long as you cover each pattern during the week, 
-                    you're on track. From any exercise hit the dropdown for options and pick what you prefer.
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="font-semibold mb-1">What are the movement patterns?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    <strong>Press</strong> (chest/shoulders), <strong>Pull</strong> (back), 
-                    <strong>Squat/Single-Leg</strong> (quads), and <strong>Hip-Dominant</strong> (glutes/hamstrings). 
-                    Cover these weekly with any exercises you want.
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="font-semibold mb-1">Exercise rotation</p>
-                  <p className="text-indigo-800 leading-relaxed mb-2">
-                    Keep it interesting: rotate exercises across the week. <strong>Keep the pattern, change the tool</strong> 
-                    (barbell → dumbbell → machine → bodyweight).
-                  </p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Heavy early. Easier later. Same pattern. If you did barbell bench Monday, try machine press or push-ups later in the week.
-                  </p>
-                </div>
-                
-                <div>
-                  <p className="font-semibold mb-1">Why recommendations change</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    The app tracks which muscles need work this week and suggests exercises that fill those gaps. 
-                    You can follow the suggestions or completely ignore them — it's chaos with guardrails, not a program.
-                  </p>
-                </div>
-                
-                <div className="pt-2 border-t border-indigo-200">
-                  <p className="text-xs text-indigo-700 italic">
-                    💪 <strong>MED = Minimum Effective Dose</strong> — the least amount of work needed to progress. 
-                    Hit your weekly targets however you want, then move on with life.
-                  </p>
-                </div>
+           {showPhilosophy && (
+            <div className="px-4 pb-4 pt-2 space-y-3 text-sm text-indigo-900 bg-white/40">
+              <div>
+                <p className="font-semibold mb-1">What split should I do?</p>
+                <p className="text-indigo-800 leading-relaxed">
+                  Whatever you like. This isn’t a program — it’s an adaptive system. Your only “job” is to
+                  hit your weekly set targets. Train full body, upper/lower, PPL, random… the app will adjust
+                  as it learns what you actually do.
+                </p>
               </div>
-            )}
+          
+              <div>
+                <p className="font-semibold mb-1">Do I have to do the recommended exercises?</p>
+                <p className="text-indigo-800 leading-relaxed">
+                  Nope. Recommendations are just the easiest way to close your weekly gaps. Keep the pattern,
+                  pick the exercise you want — use the dropdown to swap to something you prefer.
+                </p>
+              </div>
+          
+              <div>
+                <p className="font-semibold mb-1">What are the movement patterns?</p>
+                <p className="text-indigo-800 leading-relaxed">
+                  Four buckets cover basically everything:
+                  <strong> Press</strong> (chest/shoulders), <strong>Pull</strong> (back),
+                  <strong> Squat / Single-Leg</strong> (quads), and <strong>Hip-Dominant</strong> (glutes/hamstrings).
+                  If you cover these across the week, you’re on track.
+                </p>
+              </div>
+          
+              <div>
+                <p className="font-semibold mb-1">Exercise rotation</p>
+                <p className="text-indigo-800 leading-relaxed">
+                  Keep training fun: <strong>keep the pattern, change the tool</strong> (barbell → dumbbell →
+                  machine → bodyweight). A simple rule: go heavier earlier in the week, then use easier
+                  variations later to get your sets in without grinding.
+                </p>
+                <p className="text-indigo-800 leading-relaxed">
+                  Example: if you benched heavy Monday, do machine press, push-ups, or incline dumbbells later.
+                </p>
+              </div>
+          
+              <div>
+                <p className="font-semibold mb-1">Why do recommendations change?</p>
+                <p className="text-indigo-800 leading-relaxed">
+                  The app tracks what you’ve done this week and surfaces what’s still missing. Early in the
+                  week it may feel “pushy” — later it gets more specific. You can follow it, generate a
+                  session, or ignore it entirely.
+                </p>
+              </div>
+          
+              <div className="pt-2 border-t border-indigo-200">
+                <p className="text-xs text-indigo-700 italic">
+                  💪 <strong>MED = Minimum Effective Dose</strong> — the least work that reliably moves you forward.
+                  Hit your weekly targets however you want, then get on with your life.
+                </p>
+              </div>
+            </div>
+          )}
           </div>
 
           {/* Quick Start Card */}
