@@ -197,17 +197,21 @@
           'Step-ups'
         ]
       },
-      'Hip Thrusts': {
+      'Hip Thrusts / Bridges': {
         muscles: { glutes: 1, hamstrings: 0.5 },
         category: 'primary',
         movementCategory: 'posterior',
-        variants: ['Barbell Hip Thrust', 'Dumbbell Hip Thrust', 'Single-Leg Hip Thrust', 'Banded Hip Thrust', 'Smith Machine Hip Thrust']
-      },
-      'Glute Bridges': {
-        muscles: { glutes: 1, hamstrings: 0.4 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        variants: ['Glute Bridge', 'Single-Leg Glute Bridge', 'Banded Glute Bridge', 'Elevated Glute Bridge', 'Barbell Glute Bridge']
+        variants: [
+          'Barbell Hip Thrust',
+          'Dumbbell Hip Thrust',
+          'Smith Machine Hip Thrust',
+          'Single-Leg Hip Thrust',
+          'Banded Hip Thrust',
+          'Glute Bridge',
+          'Single-Leg Glute Bridge',
+          'Banded Glute Bridge',
+          'Barbell Glute Bridge'
+        ]
       },
       'Cable Kickbacks': {
         muscles: { glutes: 1 },
@@ -510,6 +514,17 @@
       return Math.floor(ms / (1000 * 60 * 60 * 24));
     };
 
+    const getVariantFamily = (variant) => {
+      if (!variant) return 'other';
+      const v = variant.toLowerCase();
+      if (v.includes('barbell')) return 'barbell';
+      if (v.includes('dumbbell') || v.includes('db')) return 'dumbbell';
+      if (v.includes('machine') || v.includes('smith')) return 'machine';
+      if (v.includes('cable') || v.includes('rope')) return 'cable';
+      if (v.includes('push-up') || v.includes('pull-up') || v.includes('dip') || v.includes('chin-up')) return 'bodyweight';
+      return 'other';
+    };
+
     // Confetti function
     const triggerConfetti = () => {
       const colors = ['#667eea', '#764ba2', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'];
@@ -647,7 +662,7 @@
           weekData.workouts.push(workout);
           
           const exercise = exerciseLibrary[workout.exercise];
-          if (exercise) {
+          if (exercise && !exercise.isBonus) { // Skip bonus exercises from volume calculations
             Object.entries(exercise.muscles).forEach(([muscle, multiplier]) => {
               if (allMuscles.includes(muscle)) {
                 weekData.volumes[muscle] += workout.sets * multiplier;
@@ -664,7 +679,7 @@
           
           muscleGroups.primary.forEach(muscle => {
             const volume = data.volumes[muscle] || 0;
-            const percentage = (volume / medTarget) * 100;
+            const percentage = Math.min((volume / medTarget) * 100, 100); // Cap at 100
             totalPercentage += percentage;
             
             if (volume >= medTarget) {
@@ -738,7 +753,7 @@
         allMuscles.forEach(m => (volume[m] = 0));
         getCurrentWeekWorkouts().forEach(w => {
           const ex = exerciseLibrary[w.exercise];
-          if (!ex) return;
+          if (!ex || ex.isBonus) return; // Skip bonus exercises from volume calculations
           Object.entries(ex.muscles).forEach(([muscle, mult]) => {
             if (!allMuscles.includes(muscle)) return;
             volume[muscle] += w.sets * mult;
@@ -821,26 +836,33 @@
           }
         });
 
-        // Ensure Big 3 are present
+        // Only add Big 3 if their movement pattern is completely missing
+        const coveredCategories = new Set(recs.map(r => r.movementCategory));
         Object.keys(majorLifts).forEach(lift => {
           const exists = recs.some(r => r.exercise === lift);
           if (!exists && exerciseLibrary[lift]) {
             const data = exerciseLibrary[lift];
-            const primaryMuscle =
-              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
-              'mixed';
-            const targets = Object.keys(data.muscles).filter(m =>
-              muscleGroups.primary.includes(m)
-            );
-            recs.push({
-              exercise: lift,
-              score: '0.1',
-              targets: targets.length ? targets : [primaryMuscle],
-              primaryMuscle,
-              category: data.category,
-              variants: data.variants,
-              movementCategory: data.movementCategory || 'press'
-            });
+            const cat = data.movementCategory;
+            
+            // Only inject if this pattern isn't covered at all
+            if (!coveredCategories.has(cat)) {
+              const primaryMuscle =
+                Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
+                'mixed';
+              const targets = Object.keys(data.muscles).filter(m =>
+                muscleGroups.primary.includes(m)
+              );
+              recs.push({
+                exercise: lift,
+                score: '0.1',
+                targets: targets.length ? targets : [primaryMuscle],
+                primaryMuscle,
+                category: data.category,
+                variants: data.variants,
+                movementCategory: data.movementCategory || 'press'
+              });
+              coveredCategories.add(cat);
+            }
           }
         });
 
@@ -952,6 +974,14 @@
       }, [getCurrentWeekWorkouts]);
 
       const buildPrioritySessionFromTopRecs = useCallback(() => {
+        // Compute fresh to avoid temporal dead zone
+        const smartRecs = getSmartRecommendations();
+        const priorities = getMuscleGroupPriorities();
+        const accessoryNeeds = priorities
+          .filter(p => !p.isPrimary && p.remaining > 0)
+          .sort((a, b) => b.remaining - a.remaining)
+          .slice(0, 3);
+        
         if (!smartRecs || smartRecs.length === 0) return;
 
         const exercisesDoneThisWeek = getExercisesDoneThisWeek();
@@ -1037,7 +1067,7 @@
         setSessionProgress({}); // Reset progress for new session
         
         showToast('Session built from your top priorities!', 'success', '💪');
-      }, [smartRecs, accessoryNeeds, showToast, getExercisesDoneThisWeek]);
+      }, [getSmartRecommendations, getMuscleGroupPriorities, showToast, getExercisesDoneThisWeek]);
 
       // Logging
       const logWorkout = useCallback((exercise, variant, sets) => {
@@ -1202,7 +1232,7 @@
         
         muscleGroups.primary.forEach(muscle => {
           const volume = currentWeekVolume[muscle] || 0;
-          const percentage = (volume / medTarget) * 100;
+          const percentage = Math.min((volume / medTarget) * 100, 100); // Cap at 100
           totalPercentage += percentage;
           
           if (volume >= medTarget) {
@@ -1278,16 +1308,38 @@
 
         // 60% chance to use last-used variant, 40% chance to randomize for variety
         const defaultVariant = React.useMemo(() => {
-          const useLastUsed = Math.random() < 0.6;
+          const variants = rec.variants || [rec.exercise];
           
-          if (useLastUsed && lastUsedVariants[rec.exercise] && rec.variants?.includes(lastUsedVariants[rec.exercise])) {
+          // Check what was used this week for this exercise
+          const thisWeekWorkouts = getCurrentWeekWorkouts();
+          const thisWeekVariantsForExercise = thisWeekWorkouts
+            .filter(w => w.exercise === rec.exercise)
+            .map(w => w.variant);
+          
+          // If we have a preferred variant from history, use it 60% of the time
+          const useLastUsed = Math.random() < 0.6;
+          if (useLastUsed && lastUsedVariants[rec.exercise] && variants.includes(lastUsedVariants[rec.exercise])) {
             return lastUsedVariants[rec.exercise];
           }
           
-          // Otherwise pick a random variant
-          const variants = rec.variants || [rec.exercise];
-          return variants[Math.floor(Math.random() * variants.length)];
-        }, [rec.exercise, rec.variants]);
+          // Otherwise, try to rotate tool families
+          if (thisWeekVariantsForExercise.length > 0) {
+            const usedFamilies = new Set(thisWeekVariantsForExercise.map(v => getVariantFamily(v)));
+            const unusedVariants = variants.filter(v => !usedFamilies.has(getVariantFamily(v)));
+            
+            if (unusedVariants.length > 0) {
+              // Deterministic selection from unused families (seeded by week)
+              const weekSeed = currentWeekStart.getTime() + rec.exercise.charCodeAt(0);
+              const index = weekSeed % unusedVariants.length;
+              return unusedVariants[index];
+            }
+          }
+          
+          // Fallback: deterministic selection (seeded by week)
+          const weekSeed = currentWeekStart.getTime() + rec.exercise.charCodeAt(0);
+          const index = weekSeed % variants.length;
+          return variants[index];
+        }, [rec.exercise, rec.variants, lastUsedVariants, getCurrentWeekWorkouts, currentWeekStart]);
 
         const selectedVariant = selectedVariants[rec.exercise] || defaultVariant;
         const sets = setSets[rec.exercise] || 3;
@@ -1579,7 +1631,7 @@
                   
                   {/* Streak display */}
                   {stats.currentStreak > 0 && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mt-3">
                       <span className="text-lg">🔥</span>
                       <span className="text-sm font-bold text-white">
                         {stats.currentStreak} week streak!
@@ -1771,7 +1823,7 @@
                   <div className="flex justify-between text-xs text-indigo-700 mb-1">
                     <span className="font-semibold">Progress</span>
                     <span>
-                      {Object.values(sessionProgress).filter(v => v === true).length}/
+                      {Object.entries(sessionProgress).filter(([k, v]) => v === true && !k.startsWith('_')).length}/
                       {[structuredSession.tier1, structuredSession.tier2, structuredSession.tier3, structuredSession.tier4].filter(Boolean).length} exercises
                     </span>
                   </div>
@@ -1779,7 +1831,7 @@
                     <div
                       className="progress-bar h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
                       style={{
-                        width: `${(Object.values(sessionProgress).filter(v => v === true).length / 
+                        width: `${(Object.entries(sessionProgress).filter(([k, v]) => v === true && !k.startsWith('_')).length / 
                           [structuredSession.tier1, structuredSession.tier2, structuredSession.tier3, structuredSession.tier4].filter(Boolean).length) * 100}%`
                       }}
                     />
@@ -1873,6 +1925,29 @@
                 })}
             </div>
           </div>
+
+          {/* Finish Week Button - show when close to completion */}
+          {(() => {
+            const setsNeededToFinish = priorities
+              .filter(p => p.isPrimary && p.remaining > 0)
+              .reduce((sum, p) => sum + p.remaining, 0);
+            
+            const incompleteMuscles = priorities.filter(p => p.isPrimary && p.remaining > 0).length;
+            
+            if (setsNeededToFinish > 0 && setsNeededToFinish <= 8 && incompleteMuscles <= 3) {
+              return (
+                <button
+                  onClick={() => setShowAlmostDone(true)}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="text-2xl">🎯</span>
+                  <span>Finish Week ({Math.ceil(setsNeededToFinish)} sets)</span>
+                  <span className="text-2xl">💪</span>
+                </button>
+              );
+            }
+            return null;
+          })()}
 
           {/* Main priorities */}
           {!structuredSession && (
@@ -2512,6 +2587,91 @@
                 <p className="text-xs italic text-slate-500 pt-2 border-t border-slate-200">
                   💡 This is chaos with guardrails: daily flexibility with weekly balance.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Data Management */}
+          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow overflow-hidden">
+            <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">
+                Data Management
+              </h3>
+            </div>
+            <div className="p-5 space-y-3">
+              <button
+                onClick={() => {
+                  const data = {
+                    workoutHistory,
+                    medTarget,
+                    lastStrengthWorkout,
+                    personalBests,
+                    achievements,
+                    lastUsedVariants,
+                    mesocycleStart: mesocycleStart.toISOString(),
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                  };
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `med-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast('Data exported successfully!', 'success', '💾');
+                }}
+                className="w-full px-4 py-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-blue-700 font-semibold hover:bg-blue-100 active:scale-98 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="text-lg">💾</span>
+                <span>Export My Data</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.json';
+                  input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        if (data.workoutHistory) setWorkoutHistory(data.workoutHistory);
+                        if (data.medTarget) setMedTarget(data.medTarget);
+                        if (data.lastStrengthWorkout) setLastStrengthWorkout(data.lastStrengthWorkout);
+                        if (data.personalBests) setPersonalBests(data.personalBests);
+                        if (data.achievements) setAchievements(data.achievements);
+                        if (data.lastUsedVariants) setLastUsedVariants(data.lastUsedVariants);
+                        
+                        showToast('Data imported successfully!', 'success', '✅');
+                        setTimeout(() => setCurrentView('workout'), 1000);
+                      } catch (error) {
+                        showToast('Import failed - invalid file format', 'error', '❌');
+                      }
+                    };
+                    reader.readAsText(file);
+                  };
+                  input.click();
+                }}
+                className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-700 font-semibold hover:bg-slate-100 active:scale-98 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="text-lg">📁</span>
+                <span>Import Data</span>
+              </button>
+
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="flex items-start gap-2 text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">
+                  <span className="text-base">🔒</span>
+                  <div>
+                    <p className="font-semibold text-slate-700 mb-1">Your Privacy Matters</p>
+                    <p>All your data stays on your device. Nothing is sent to any server. Export your data anytime for backup.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
