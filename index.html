@@ -1689,95 +1689,6 @@
             </div>
           </div>
 
-          {/* Philosophy Info Strip */}
-          <div className="card-hover rounded-xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 shadow-md overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowPhilosophy(!showPhilosophy)}
-              className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-white/30 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                <span className="text-sm font-bold text-indigo-900">
-                  How does this work?
-                </span>
-              </div>
-              <div className={`transform transition-transform ${showPhilosophy ? 'rotate-180' : ''}`}>
-                <ChevronDown className="text-indigo-600" />
-              </div>
-            </button>
-            
-            {showPhilosophy && (
-              <div className="px-4 pb-4 pt-2 space-y-3 text-sm text-indigo-900 bg-white/40">
-                <div>
-                  <p className="font-semibold mb-1">What split should I do?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Whatever you like. This isn’t a program — it’s an adaptive system. Your only “job” is to
-                    hit your weekly set targets. Train full body, upper/lower, PPL, random… the app will adjust
-                    as it learns what you actually do.
-                  </p>
-                </div>
-            
-                <div>
-                  <p className="font-semibold mb-1">Do I have to do the recommended exercises?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Nope. Recommendations are just the easiest way to close your weekly gaps. Keep the pattern,
-                    pick the exercise you want — use the dropdown to swap to something you prefer.
-                  </p>
-                </div>
-            
-                <div>
-                  <p className="font-semibold mb-1">What are the movement patterns?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Four buckets cover basically everything:
-                    <strong> Press</strong> (chest/shoulders), <strong>Pull</strong> (back),
-                    <strong> Squat / Single-Leg</strong> (quads), and <strong>Hip-Dominant</strong> (glutes/hamstrings).
-                    If you cover these across the week, you’re on track.
-                  </p>
-                </div>
-            
-                <div>
-                  <p className="font-semibold mb-1">Exercise rotation</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Keep training fun: <strong>keep the pattern, change the tool</strong> (barbell → dumbbell →
-                    machine → bodyweight). A simple rule: go heavier earlier in the week, then use easier
-                    variations later to get your sets in without grinding.
-                  </p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Example: if you benched heavy Monday, do machine press, push-ups, or incline dumbbells later.
-                  </p>
-                </div>
-            
-                <div>
-                  <p className="font-semibold mb-1">How long should I rest?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    Rest as long as you need to perform the next set well. Heavier, more demanding lifts
-                    generally need longer rest; lighter or isolation work usually needs less.
-                  </p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    There’s no prize for rushing — good sets matter more than the clock.
-                  </p>
-                </div>
-            
-                <div>
-                  <p className="font-semibold mb-1">Why do recommendations change?</p>
-                  <p className="text-indigo-800 leading-relaxed">
-                    The app tracks what you’ve done this week and surfaces what’s still missing. Early in the
-                    week it may feel “pushy” — later it gets more specific. You can follow it, generate a
-                    session, or ignore it entirely.
-                  </p>
-                </div>
-            
-                <div className="pt-2 border-t border-indigo-200">
-                  <p className="text-xs text-indigo-700 italic">
-                    💪 <strong>MED = Minimum Effective Dose</strong> — the least work that reliably moves you forward.
-                    Hit your weekly targets however you want, then get on with your life.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Quick Start Card */}
           <div className="card-hover rounded-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-emerald-200 shadow-md overflow-hidden">
             <button
@@ -2470,6 +2381,118 @@
             </div>
           </div>
 
+          {/* How Does This Work? - Comprehensive FAQ */}
+          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+              <h2 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
+                <span className="text-xl">💡</span>
+                How Does This Work?
+              </h2>
+            </div>
+            <div className="p-5 space-y-4 text-sm">
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">What split should I do?</p>
+                <p className="text-slate-700 leading-relaxed">
+                  Whatever you like. This isn't a program — it's an adaptive system. Your only "job" is to
+                  hit your weekly set targets. Train full body, upper/lower, PPL, random… the app will adjust
+                  as it learns what you actually do.
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Do I have to do the recommended exercises?</p>
+                <p className="text-slate-700 leading-relaxed">
+                  Nope. Recommendations are just the easiest way to close your weekly gaps. Keep the pattern,
+                  pick the exercise you want — use the dropdown to swap to something you prefer.
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">What are the movement patterns?</p>
+                <p className="text-slate-700 leading-relaxed">
+                  Four buckets cover basically everything:
+                  <strong> Press</strong> (chest/shoulders), <strong>Pull</strong> (back),
+                  <strong> Squat / Single-Leg</strong> (quads), and <strong>Hip-Dominant</strong> (glutes/hamstrings).
+                  If you cover these across the week, you're on track.
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Exercise rotation</p>
+                <p className="text-slate-700 leading-relaxed mb-2">
+                  Keep training fun: <strong>keep the pattern, change the tool</strong> (barbell → dumbbell →
+                  machine → bodyweight). A simple rule: go heavier earlier in the week, then use easier
+                  variations later to get your sets in without grinding.
+                </p>
+                <p className="text-slate-700 leading-relaxed">
+                  Example: if you benched heavy Monday, do machine press, push-ups, or incline dumbbells later.
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">How many reps should I do?</p>
+                <p className="text-slate-700 leading-relaxed mb-2">
+                  Whatever lets you accumulate quality sets. The app tracks sets, not reps.
+                </p>
+                <div className="space-y-2 ml-3">
+                  <div>
+                    <span className="font-medium text-slate-900">• 5-8 reps (heavy):</span>
+                    <span className="text-slate-600"> Great for strength, more fatiguing</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-900">• 8-12 reps (moderate):</span>
+                    <span className="text-slate-600"> Classic hypertrophy range</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-900">• 12-20+ reps (light):</span>
+                    <span className="text-slate-600"> Easier on joints, great for accessories</span>
+                  </div>
+                </div>
+                <p className="text-slate-700 leading-relaxed mt-2">
+                  Research shows muscle growth is similar across rep ranges when sets are taken close to failure 
+                  (Schoenfeld et al., 2021). Pick what fits your session and equipment.
+                </p>
+                <p className="text-slate-600 text-xs italic mt-2">
+                  Early week: Heavier (5-8 reps) when fresh • Late week: Lighter (12-20 reps) to get sets in without grinding
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">How long should I rest?</p>
+                <p className="text-slate-700 leading-relaxed">
+                  Rest as long as you need to perform the next set well. Heavier, more demanding lifts
+                  generally need longer rest; lighter or isolation work usually needs less.
+                </p>
+                <p className="text-slate-700 leading-relaxed mt-1">
+                  There's no prize for rushing — good sets matter more than the clock.
+                </p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Why do recommendations change?</p>
+                <p className="text-slate-700 leading-relaxed">
+                  The app tracks what you've done this week and surfaces what's still missing. Early in the
+                  week it may feel "pushy" — later it gets more specific. You can follow it, generate a
+                  session, or ignore it entirely.
+                </p>
+              </div>
+              
+              <div className="pt-3 border-t border-slate-200">
+                <p className="text-xs text-slate-600 leading-relaxed mb-2">
+                  <strong className="text-slate-900">💪 MED = Minimum Effective Dose</strong> — the least work that reliably moves you forward.
+                  Hit your weekly targets however you want, then get on with your life.
+                </p>
+                <div className="text-xs text-slate-500 space-y-1">
+                  <p className="font-semibold text-slate-700">Research backing this approach:</p>
+                  <p>• Volume targets: Schoenfeld et al. (2017) - "Dose-response relationship between weekly set volume and muscle mass"</p>
+                  <p>• Rep ranges: Schoenfeld et al. (2021) - "Hypertrophic effects across rep ranges when taken close to failure"</p>
+                  <p>• Minimum effective dose: Helms et al. (2018) - "Evidence-based recommendations for natural bodybuilding"</p>
+                  <p>• Motor pattern retention: Schmidt & Lee (2011) - "Motor Control and Learning"</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
               <h2 className="text-lg font-bold text-slate-900">How many sets do I need?</h2>
@@ -2488,15 +2511,12 @@
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-center">
                     <div className="font-bold text-lg text-slate-900">Maintenance</div>
                     <div className="font-black text-xl text-blue-600">5 sets</div>
                   </div>
-                  <div className="text-sm text-slate-700 mb-2">
+                  <div className="text-sm text-slate-600 mt-1">
                     Maintain muscle with minimal time investment
-                  </div>
-                  <div className="text-xs text-slate-500 italic">
-                    Great for busy periods or deload weeks
                   </div>
                 </button>
 
@@ -2508,15 +2528,12 @@
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-center">
                     <div className="font-bold text-lg text-slate-900">Growth (Recommended)</div>
                     <div className="font-black text-xl text-emerald-600">10 sets</div>
                   </div>
-                  <div className="text-sm text-slate-700 mb-2">
-                    Optimal for most people seeking muscle growth
-                  </div>
-                  <div className="text-xs text-slate-500 italic">
-                    Research-backed "sweet spot" for hypertrophy (Schoenfeld et al., 2017)
+                  <div className="text-sm text-slate-600 mt-1">
+                    Optimal for most people (research-backed sweet spot)
                   </div>
                 </button>
 
@@ -2528,68 +2545,14 @@
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-center">
                     <div className="font-bold text-lg text-slate-900">Advanced Volume</div>
                     <div className="font-black text-xl text-purple-600">15 sets</div>
                   </div>
-                  <div className="text-sm text-slate-700 mb-2">
+                  <div className="text-sm text-slate-600 mt-1">
                     Maximum adaptive volume for experienced lifters
                   </div>
-                  <div className="text-xs text-slate-500 italic">
-                    Approaching maximum recoverable volume (MRV) for most people
-                  </div>
                 </button>
-              </div>
-
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-900 leading-relaxed">
-                  <strong>Research note:</strong> Studies show 10-20 sets per muscle per week optimizes hypertrophy for most trained individuals 
-                  (Schoenfeld et al., 2017; Baz-Valle et al., 2022). Individual response varies—start at 10 and adjust based on recovery.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card-hover rounded-xl bg-white border border-slate-200 shadow-md overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-lg font-bold text-slate-900">How many reps should I do?</h2>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-700 leading-relaxed mb-4">
-                <strong>Short answer:</strong> Do what feels good. Anything above 5 reps works for most goals.
-              </p>
-              
-              <div className="space-y-3 text-sm text-slate-600">
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="font-semibold text-slate-900 mb-1">5-8 reps</div>
-                  <div className="text-xs">Strength-focused with good hypertrophy</div>
-                </div>
-                
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="font-semibold text-slate-900 mb-1">8-12 reps</div>
-                  <div className="text-xs">Classic hypertrophy range (most popular)</div>
-                </div>
-                
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="font-semibold text-slate-900 mb-1">12-20 reps</div>
-                  <div className="text-xs">Great for muscle growth with less joint stress</div>
-                </div>
-                
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="font-semibold text-slate-900 mb-1">20+ reps</div>
-                  <div className="text-xs">Metabolic work, endurance, "pump" training</div>
-                </div>
-              </div>
-
-              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-xs text-amber-900 leading-relaxed mb-2">
-                  <strong>The science:</strong> Hypertrophy occurs across a wide rep range (5-30+) when sets are taken close to failure 
-                  (Schoenfeld et al., 2021). The "best" rep range is the one you can do consistently.
-                </p>
-                <p className="text-xs text-amber-900 leading-relaxed">
-                  <strong>Practical tip:</strong> Mix rep ranges throughout the week. Heavy squats (5-8), moderate bench (8-12), 
-                  higher-rep accessories (12-20). Variety prevents adaptation and keeps training interesting.
-                </p>
               </div>
             </div>
           </div>
