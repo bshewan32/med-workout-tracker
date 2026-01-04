@@ -348,7 +348,8 @@
     const majorLifts = {
       'Squats': ['quads', 'glutes'],
       'Bench Press': ['chest', 'triceps'],
-      'Deadlifts': ['glutes', 'hamstrings', 'upperBack']
+      'Deadlifts': ['glutes', 'hamstrings', 'upperBack'],
+      'Rows': ['upperBack', 'lats']
     };
 
     const movementCategoryMeta = {
@@ -842,7 +843,7 @@
           }
         });
 
-        // Only add Big 3 if their movement pattern is completely missing
+        // Only add major lifts if their movement pattern is completely missing
         const coveredCategories = new Set(recs.map(r => r.movementCategory));
         Object.keys(majorLifts).forEach(lift => {
           const exists = recs.some(r => r.exercise === lift);
