@@ -2873,28 +2873,7 @@ import "./styles.css";
                 <p className="text-sm text-orange-900 leading-relaxed">
                   You're super close to hitting your weekly targets! Want to finish strong? 💪
                 </p>
-
-                {/* BUILD QUICK FINISHER BUTTON - THE MAIN ACTION */}
-                <button
-                  onClick={buildQuickFinisher}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">🔥</span>
-                  <span>Yes! Build Quick Finisher</span>
-                  <span className="text-xl">💪</span>
-                </button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-orange-200"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 text-orange-600 font-medium">
-                      or pick individual exercises
-                    </span>
-                  </div>
-                </div>
-                
+                                             
                 {almostDoneSuggestions.map(suggestion => (
                   <div key={suggestion.muscle} className="bg-white rounded-xl p-4 border-2 border-orange-200 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
