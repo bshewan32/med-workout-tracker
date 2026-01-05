@@ -989,20 +989,21 @@
       }, [getMuscleGroupPriorities]);
 
       // Determine session size based on remaining volume
-      const getSessionSize = useCallback((totalRemaining) => {
-        if (totalRemaining <= 4) return 2;   // Almost done - quick finisher
-        if (totalRemaining <= 8) return 3;   // Light day  
-        if (totalRemaining <= 12) return 4;  // Normal session
-        if (totalRemaining <= 16) return 5;  // Bigger session
-        return 6;                             // Major volume day (early week)
-      }, []);
+      const getSessionSize = (priorities) => {
+        const behind = priorities.filter(p => p.isPrimary && p.remaining >= 3).length;
+
+        if (behind <= 1) return 2;
+        if (behind <= 2) return 3;
+        if (behind <= 4) return 4;
+        return 5;
+      };
 
       const buildPrioritySessionFromTopRecs = useCallback(() => {
         // Compute fresh to avoid temporal dead zone
         const smartRecs = getSmartRecommendations();
         const priorities = getMuscleGroupPriorities();
         const totalRemaining = getTotalRemaining();
-        const sessionSize = getSessionSize(totalRemaining);
+        const sessionSize = Math.min(getSessionSize(priorities), 4);
         
         const accessoryNeeds = priorities
           .filter(p => !p.isPrimary && p.remaining > 0)
