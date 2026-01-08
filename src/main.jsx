@@ -2830,55 +2830,7 @@ import "./styles.css";
           setAlmostDoneSuggestions([]);
         };
 
-        const buildQuickFinisher = () => {
-          // Build a mini-session with exercises to complete the week
-          const sessionExercises = [];
-          
-          almostDoneSuggestions.forEach(suggestion => {
-            if (suggestion.exercises.length > 0) {
-              const exercise = suggestion.exercises[0]; // Take first recommended exercise
-              const setsNeeded = Math.ceil(parseFloat(suggestion.remaining));
-              
-              sessionExercises.push({
-                exercise: exercise.exercise,
-                score: setsNeeded.toString(),
-                targets: [suggestion.muscle],
-                primaryMuscle: suggestion.muscle,
-                category: exercise.category,
-                variants: exercise.variants,
-                movementCategory: exercise.movementCategory,
-                recommendedSets: setsNeeded
-              });
-            }
-          });
-
-          // Build structured session (max 4 exercises)
-          const [tier1, tier2, tier3, tier4] = sessionExercises.slice(0, 4);
-
-          setStructuredSession({
-            lift: 'Quick Finisher',
-            tier1: tier1 || null,
-            tier2: tier2 || null,
-            tier3: tier3 || null,
-            tier4: tier4 || null
-          });
-
-          // Pre-set recommended sets
-          const newSetSets = {};
-          sessionExercises.forEach(ex => {
-            if (ex.recommendedSets) {
-              newSetSets[ex.exercise] = ex.recommendedSets;
-            }
-          });
-          setSetSets(prev => ({ ...prev, ...newSetSets }));
-
-          setSessionProgress({}); // Reset progress for new session
-          setShowAlmostDone(false);
-          setAlmostDoneSuggestions([]);
-          
-          showToast('Quick finisher built! Let\'s complete the week! 🎯', 'success', '💪');
-        };
-
+        
         return (
           <div className="fixed inset-0 bg-black/50 modal-overlay flex items-center justify-center z-50 p-4">
             <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl border-2 border-orange-300">
