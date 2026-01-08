@@ -1802,60 +1802,59 @@ import "./styles.css";
             </div>
           </div>
 
-         {/* Finish Week Button - show when close to completion */}
-         {(() => {
-           const setsNeededToFinish = priorities
-             .filter(p => p.isPrimary && p.remaining > 0)
-             .reduce((sum, p) => sum + p.remaining, 0);
-           
-           const incompleteMuscles = priorities.filter(p => p.isPrimary && p.remaining > 0).length;
-           
-           if (setsNeededToFinish > 0 && setsNeededToFinish <= 8 && incompleteMuscles <= 3) {
-             return (
-               <button
-                 onClick={() => {
-                   // BUILD SUGGESTIONS BEFORE OPENING MODAL
-                   const suggestions = [];
-                   
-                   priorities
-                     .filter(p => p.isPrimary && p.remaining > 0)
-                     .forEach(p => {
-                       const quickExercises = Object.entries(exerciseLibrary)
-                         .filter(([name, data]) => {
-                           const muscleContribution = data.muscles[p.muscle] || 0;
-                           return muscleContribution >= 0.8 && data.category === 'accessory';
-                         })
-                         .map(([name, data]) => ({
-                           exercise: name,
-                           remaining: p.remaining,
-                           muscle: p.muscle,
-                           category: data.category,
-                           variants: data.variants,
-                           movementCategory: data.movementCategory
-                         }));
-                       
-                       if (quickExercises.length > 0) {
-                         suggestions.push({
-                           muscle: p.muscle,
-                           remaining: p.remaining.toFixed(1),
-                           exercises: quickExercises.slice(0, 3)
-                         });
-                       }
-                     });
-                   
-                   setAlmostDoneSuggestions(suggestions);
-                   setShowAlmostDone(true);
-                 }}
-                 className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
-               >
-                 <span className="text-2xl">🎯</span>
-                 <span>Finish Week ({Math.ceil(setsNeededToFinish)} sets)</span>
-                 <span className="text-2xl">💪</span>
-               </button>
-             );
-           }
-           return null;
-         })()}
+          {/* Finish Week Button - show when close to completion */}
+          {(() => {
+            const setsNeededToFinish = priorities
+              .filter(p => p.isPrimary && p.remaining > 0)
+              .reduce((sum, p) => sum + p.remaining, 0);
+            
+            const incompleteMuscles = priorities.filter(p => p.isPrimary && p.remaining > 0).length;
+            
+            if (setsNeededToFinish > 0 && setsNeededToFinish <= 8 && incompleteMuscles <= 3) {
+              return (
+                <button
+                  onClick={() => {
+                    const suggestions = [];
+                    
+                    priorities
+                      .filter(p => p.isPrimary && p.remaining > 0)
+                      .forEach(p => {
+                        const quickExercises = Object.entries(exerciseLibrary)
+                          .filter(([name, data]) => {
+                            const muscleContribution = data.muscles[p.muscle] || 0;
+                            return muscleContribution >= 0.8 && data.category === 'accessory';
+                          })
+                          .map(([name, data]) => ({
+                            exercise: name,
+                            remaining: p.remaining,
+                            muscle: p.muscle,
+                            category: data.category,
+                            variants: data.variants,
+                            movementCategory: data.movementCategory
+                          }));
+                        
+                        if (quickExercises.length > 0) {
+                          suggestions.push({
+                            muscle: p.muscle,
+                            remaining: p.remaining.toFixed(1),
+                            exercises: quickExercises.slice(0, 3)
+                          });
+                        }
+                      });
+                    
+                    setAlmostDoneSuggestions(suggestions);
+                    setShowAlmostDone(true);
+                  }}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="text-2xl">🎯</span>
+                  <span>Finish Week ({Math.ceil(setsNeededToFinish)} sets)</span>
+                  <span className="text-2xl">💪</span>
+                </button>
+              );
+            }
+            return null;
+          })()}
 
           {/* Main priorities */}
           {!structuredSession && (
@@ -2831,7 +2830,10 @@ import "./styles.css";
           setAlmostDoneSuggestions([]);
         };
 
-                 
+        const buildQuickFinisher = () => {
+          // Build a mini-session with exercises to complete the week
+          const sessionExercises = [];
+          
           almostDoneSuggestions.forEach(suggestion => {
             if (suggestion.exercises.length > 0) {
               const exercise = suggestion.exercises[0]; // Take first recommended exercise
@@ -2980,31 +2982,31 @@ import "./styles.css";
         
         return (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-              <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 px-6 py-5 text-center">
-                <div className="text-3xl mb-2">💪</div>
-                <h2 className="text-xl font-black text-white mb-1">
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+              <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 px-6 py-8 text-center">
+                <div className="text-5xl mb-3">💪</div>
+                <h2 className="text-2xl font-black text-white mb-2">
                   Adaptive Priority Training
                 </h2>
-                <p className="text-white/90 text-xs leading-relaxed">
+                <p className="text-white/90 text-sm leading-relaxed">
                   Chaos with guardrails: flexible workouts, weekly balance
                 </p>
               </div>
               
-              <div className="p-5 space-y-3">  {/* Changed from p-6 space-y-4 */}
+              <div className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-bold text-slate-900 mb-2 text-sm">Quick Start</h3>
-                  <ul className="text-xs text-slate-700 space-y-1 list-disc pl-4">
-                    <li>Train 3–5 days per week</li>
-                    <li>2–4 exercises per session, 2–4 sets each</li>
-                    <li>Cover Press / Pull / Squat / Hip-Dominant</li>
+                  <h3 className="font-bold text-slate-900 mb-3">Quick Start</h3>
+                  <ul className="text-sm text-slate-700 space-y-2 list-disc pl-5">
+                    <li>Train 3–5 days per week (or whenever you can)</li>
+                    <li>Pick 2–4 exercises per session, 2–4 sets each</li>
+                    <li>Cover Press / Pull / Squat / Hip-Dominant across the week</li>
                   </ul>
                 </div>
                 
-                <div className="border-t pt-3">  {/* Added visual separation */}
-                  <h3 className="font-bold text-slate-900 mb-2 text-sm">Choose Weekly Target</h3>
-                  <p className="text-xs text-slate-600 mb-2">
-                    Sets per muscle per week
+                <div className="border-t pt-4">
+                  <h3 className="font-bold text-slate-900 mb-3">Choose Your Weekly Target</h3>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Sets per muscle group per week (you can change this later)
                   </p>
                   
                   <div className="space-y-2">
