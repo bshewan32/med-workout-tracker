@@ -1802,28 +1802,60 @@ import "./styles.css";
             </div>
           </div>
 
-          {/* Finish Week Button - show when close to completion */}
-          {(() => {
-            const setsNeededToFinish = priorities
-              .filter(p => p.isPrimary && p.remaining > 0)
-              .reduce((sum, p) => sum + p.remaining, 0);
-            
-            const incompleteMuscles = priorities.filter(p => p.isPrimary && p.remaining > 0).length;
-            
-            if (setsNeededToFinish > 0 && setsNeededToFinish <= 8 && incompleteMuscles <= 3) {
-              return (
-                <button
-                  onClick={() => setShowAlmostDone(true)}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
-                >
-                  <span className="text-2xl">🎯</span>
-                  <span>Finish Week ({Math.ceil(setsNeededToFinish)} sets)</span>
-                  <span className="text-2xl">💪</span>
-                </button>
-              );
-            }
-            return null;
-          })()}
+         {/* Finish Week Button - show when close to completion */}
+         {(() => {
+           const setsNeededToFinish = priorities
+             .filter(p => p.isPrimary && p.remaining > 0)
+             .reduce((sum, p) => sum + p.remaining, 0);
+           
+           const incompleteMuscles = priorities.filter(p => p.isPrimary && p.remaining > 0).length;
+           
+           if (setsNeededToFinish > 0 && setsNeededToFinish <= 8 && incompleteMuscles <= 3) {
+             return (
+               <button
+                 onClick={() => {
+                   // BUILD SUGGESTIONS BEFORE OPENING MODAL
+                   const suggestions = [];
+                   
+                   priorities
+                     .filter(p => p.isPrimary && p.remaining > 0)
+                     .forEach(p => {
+                       const quickExercises = Object.entries(exerciseLibrary)
+                         .filter(([name, data]) => {
+                           const muscleContribution = data.muscles[p.muscle] || 0;
+                           return muscleContribution >= 0.8 && data.category === 'accessory';
+                         })
+                         .map(([name, data]) => ({
+                           exercise: name,
+                           remaining: p.remaining,
+                           muscle: p.muscle,
+                           category: data.category,
+                           variants: data.variants,
+                           movementCategory: data.movementCategory
+                         }));
+                       
+                       if (quickExercises.length > 0) {
+                         suggestions.push({
+                           muscle: p.muscle,
+                           remaining: p.remaining.toFixed(1),
+                           exercises: quickExercises.slice(0, 3)
+                         });
+                       }
+                     });
+                   
+                   setAlmostDoneSuggestions(suggestions);
+                   setShowAlmostDone(true);
+                 }}
+                 className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2"
+               >
+                 <span className="text-2xl">🎯</span>
+                 <span>Finish Week ({Math.ceil(setsNeededToFinish)} sets)</span>
+                 <span className="text-2xl">💪</span>
+               </button>
+             );
+           }
+           return null;
+         })()}
 
           {/* Main priorities */}
           {!structuredSession && (
@@ -2799,10 +2831,7 @@ import "./styles.css";
           setAlmostDoneSuggestions([]);
         };
 
-        const buildQuickFinisher = () => {
-          // Build a mini-session with exercises to complete the week
-          const sessionExercises = [];
-          
+                 
           almostDoneSuggestions.forEach(suggestion => {
             if (suggestion.exercises.length > 0) {
               const exercise = suggestion.exercises[0]; // Take first recommended exercise
