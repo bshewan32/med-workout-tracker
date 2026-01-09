@@ -1075,6 +1075,7 @@ import "./styles.css";
         
         // Check for "almost done" muscles (1-2 sets away from MED target)
         setTimeout(() => {
+           if (showAlmostDone) return;
           const almostDone = [];
           allMuscles.forEach(muscle => {
             const current = updatedVolume[muscle] || 0;
