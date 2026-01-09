@@ -1113,7 +1113,7 @@ import "./styles.css";
             setShowAlmostDone(true);
           }
         }, 1000); // Small delay so confetti/toasts appear first
-      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests, structuredSession]);
+      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests, structuredSession, showAlmostDone]);
 
       // Derived
       const priorities = getMuscleGroupPriorities();
