@@ -11,6 +11,7 @@ import "./styles.css";
         muscles: { quads: 1, glutes: 0.6, core: 0.3 },
         category: 'primary',
         movementCategory: 'squat',
+        hasNonAxialVariants: true,
         variants: [
           'Back Squat',
           'Front Squat',
@@ -28,6 +29,7 @@ import "./styles.css";
         muscles: { chest: 1, triceps: 0.6, shoulders: 0.4 },
         category: 'primary',
         movementCategory: 'press',
+        isDefaultNonAxial: true,
         variants: [
           'Flat Barbell Bench',
           'Incline Bench',
@@ -42,6 +44,7 @@ import "./styles.css";
         muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
         category: 'primary',
         movementCategory: 'press',
+        isDefaultNonAxial: true,
         variants: [
           'Standing Barbell Overhead Press',
           'Seated Dumbbell Shoulder Press',
@@ -52,24 +55,28 @@ import "./styles.css";
         muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
         category: 'primary',
         movementCategory: 'posterior',
+        hasNonAxialVariants: false, 
         variants: ['Conventional Deadlift', 'Sumo Deadlift', 'Trap Bar Deadlift', 'Romanian Deadlift', 'Deficit Deadlift']
       },
       'Rows': {
         muscles: { upperBack: 1, lats: 0.6, biceps: 0.4 },
         category: 'primary',
         movementCategory: 'pull',
+        hasNonAxialVariants: true, 
         variants: ['Barbell Row', 'Dumbbell Row', 'Chest-Supported Row', 'Cable Row']
       },
       'Pull-ups': {
         muscles: { lats: 1, upperBack: 0.4, biceps: 0.6 },
         category: 'primary',
         movementCategory: 'pull',
+        isDefaultNonAxial: true,
         variants: ['Pull-ups', 'Chin-ups', 'Neutral Grip', 'Band-Assisted Pull-ups', 'Assisted Pull-up Machine', 'Lat Pulldown']
       },
       'Lunges': {
         muscles: { quads: 1, glutes: 0.8 },
         category: 'primary',
         movementCategory: 'squat',
+        hasNonAxialVariants: true,
         variants: [
           'Walking Lunges',
           'Reverse Lunges',
@@ -82,6 +89,8 @@ import "./styles.css";
         muscles: { glutes: 1, hamstrings: 0.5 },
         category: 'primary',
         movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        hasNonAxialVariants: true, 
         variants: [
           'Barbell Hip Thrust',
           'Dumbbell Hip Thrust',
@@ -92,6 +101,7 @@ import "./styles.css";
           'Single-Leg Glute Bridge',
           'Banded Glute Bridge',
           'Barbell Glute Bridge'
+          'Machine Hip Thrust'
         ]
       },
       'Cable Kickbacks': {
@@ -880,240 +890,315 @@ import "./styles.css";
       };
 
       const buildPrioritySessionFromTopRecs = useCallback(() => {
-        // Compute fresh to avoid temporal dead zone
-        const smartRecs = getSmartRecommendations();
-        const priorities = getMuscleGroupPriorities();
-        const totalRemaining = getTotalRemaining();
-        const sessionSize = Math.min(getSessionSize(priorities), 4);
-        
-        const accessoryNeeds = priorities
-          .filter(p => !p.isPrimary && p.remaining > 0)
-          .sort((a, b) => b.remaining - a.remaining)
-          .slice(0, 3);
-        
-        if (!smartRecs || smartRecs.length === 0) return;
-
-        const exercisesDoneThisWeek = getExercisesDoneThisWeek();
-        
-        // Prefer exercises NOT done this week
-        const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
-        const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
-        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
-
-        const chosen = [];
-        const usedCategories = new Set();
-
-        // First pass: one from each movement category (up to sessionSize)
-        shuffled.forEach(rec => {
-          if (chosen.length >= sessionSize) return;
-          const cat = rec.movementCategory || 'press';
-          if (!usedCategories.has(cat)) {
-            chosen.push(rec);
-            usedCategories.add(cat);
-          }
-        });
-
-        // Second pass: fill remaining slots
-        if (chosen.length < sessionSize) {
-          shuffled.forEach(rec => {
-            if (chosen.length >= sessionSize) return;
-            if (!chosen.some(c => c.exercise === rec.exercise)) {
-              chosen.push(rec);
-            }
-          });
-        }
-
-        if (chosen.length === 0) return;
-
-        // RANDOMIZE THE ORDER - don't always put highest priority first
-        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
-
-        // 35% chance to add an accessory finisher (only if session has room)
-        let finisher = null;
-        const shouldAddFinisher =
-          accessoryNeeds &&
-          accessoryNeeds.length > 0 &&
-          chosen.length < 4 &&
-          Math.random() < 0.35;
-
-        if (shouldAddFinisher) {
-          const topAccessoryNeed = accessoryNeeds[0];
-          const accessoryCandidates = Object.entries(exerciseLibrary)
-            .filter(([name, data]) => data.category === 'accessory')
-            .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
-
-          if (accessoryCandidates.length > 0) {
-            const [name, data] =
-              accessoryCandidates[
-                Math.floor(Math.random() * accessoryCandidates.length)
-              ];
-
-            const primaryMuscle =
-              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
-              topAccessoryNeed.muscle;
-
-            finisher = {
-              exercise: name,
-              score: null,
-              targets: [topAccessoryNeed.muscle],
-              primaryMuscle,
-              category: data.category,
-              variants: data.variants,
-              movementCategory: data.movementCategory || 'accessory'
-            };
-          }
-        }
-
-        const [tier1, tier2, tier3, tier4, tier5, tier6] = randomizedOrder;
-
-        setStructuredSession({
-          lift: 'Priority-based',
-          tier1,
-          tier2: tier2 || null,
-          tier3: tier3 || null,
-          tier4: tier4 || finisher || null,
-          tier5: tier5 || null,
-          tier6: tier6 || null
-        });
-        
-        setSessionProgress({}); // Reset progress for new session
-        
-        const sizeLabel = sessionSize === 2 ? 'quick finisher' : 
-                          sessionSize === 3 ? 'light session' :
-                          sessionSize === 4 ? 'balanced session' :
-                          sessionSize === 5 ? 'solid session' : 
-                          'big session';
-        
-        showToast(`${sessionSize}-exercise ${sizeLabel} built from your top gaps!`, 'success', '💪');
-      }, [getSmartRecommendations, getMuscleGroupPriorities, getTotalRemaining, getSessionSize, showToast, getExercisesDoneThisWeek]);
-
-      // Logging
-      const logWorkout = useCallback((exercise, variant, sets) => {
-        const newEntry = {
-          exercise,
-          variant,
-          sets,
-          date: new Date().toISOString(),
-          id: Date.now()
-        };
-        
-        // Check if this completes a muscle group
-        const currentVolume = calculateCurrentWeekVolume();
-        const ex = exerciseLibrary[exercise];
-        if (ex) {
-          Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
-            if (allMuscles.includes(muscle)) {
-              const newVolume = (currentVolume[muscle] || 0) + (sets * multiplier);
-              const wasIncomplete = currentVolume[muscle] < medTarget;
-              const nowComplete = newVolume >= medTarget;
-              
-              if (wasIncomplete && nowComplete) {
-                triggerConfetti();
-                showToast(`${muscle.charAt(0).toUpperCase() + muscle.slice(1)} target hit! 🎉`, 'celebration', '🎯');
-              }
-            }
-          });
-        }
-        
-        setWorkoutHistory(prev => [...prev, newEntry]);
-
-        if (majorLifts[exercise]) {
-          setLastStrengthWorkout(prev => ({
-            ...prev,
-            [exercise]: new Date().toISOString()
-          }));
-        }
-
-        setLastUsedVariants(prev => ({
-          ...prev,
-          [exercise]: variant
-        }));
-        
-        // Track session progress
-        if (structuredSession) {
-          setSessionProgress(prev => {
-            const updated = { ...prev, [exercise]: true };
-            
-            // Check if all session exercises are complete
-            const allExercises = [
-              structuredSession.tier1?.exercise,
-              structuredSession.tier2?.exercise,
-              structuredSession.tier3?.exercise,
-              structuredSession.tier4?.exercise,
-              structuredSession.tier5?.exercise,
-              structuredSession.tier6?.exercise
-            ].filter(Boolean);
-            
-            const allComplete = allExercises.every(ex => updated[ex]);
-            
-            if (allComplete && !prev._celebrated) {
-              // Trigger "As Rx'd!" celebration
-              setTimeout(() => {
-                triggerConfetti();
-                triggerConfetti(); // Double confetti!
-                showToast('Session Complete - As Rx\'d! 💪🔥', 'celebration', '🏆');
-              }, 500);
-              updated._celebrated = true;
-            }
-            
-            return updated;
-          });
-        }
-        
-        showToast(`Logged ${sets} sets of ${variant}`, 'success', '✓');
-        
-        // Update personal bests
-        const updatedVolume = { ...currentVolume };
-        if (ex) {
-          Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
-            if (allMuscles.includes(muscle)) {
-              updatedVolume[muscle] = (updatedVolume[muscle] || 0) + (sets * multiplier);
-            }
-          });
-        }
-        updatePersonalBests(updatedVolume);
-        
-        // Check for "almost done" muscles (1-2 sets away from MED target)
-        setTimeout(() => {
-           if (showAlmostDone) return;
-          const almostDone = [];
-          allMuscles.forEach(muscle => {
-            const current = updatedVolume[muscle] || 0;
-            const remaining = medTarget - current;
-            
-            if (remaining > 0 && remaining <= 2) {
-              // Find quick ACCESSORY exercises that could complete this muscle (no big compounds!)
-              const quickExercises = Object.entries(exerciseLibrary)
-                .filter(([name, data]) => {
-                  const muscleContribution = data.muscles[muscle] || 0;
-                  // ONLY accessories - no heavy compound lifts for quick finishers
-                  return muscleContribution >= 0.8 && data.category === 'accessory';
-                })
-                .map(([name, data]) => ({
-                  exercise: name,
-                  remaining: remaining,
-                  muscle: muscle,
-                  category: data.category,
-                  variants: data.variants,
-                  movementCategory: data.movementCategory
-                }));
-              
-              if (quickExercises.length > 0) {
-                almostDone.push({
-                  muscle,
-                  remaining: remaining.toFixed(1),
-                  exercises: quickExercises.slice(0, 3) // Top 3 suggestions
-                });
-              }
-            }
-          });
-          
-          if (almostDone.length > 0) {
-            setAlmostDoneSuggestions(almostDone);
-            setShowAlmostDone(true);
-          }
-        }, 1000); // Small delay so confetti/toasts appear first
-      }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests, structuredSession, showAlmostDone]);
+     // Compute fresh to avoid temporal dead zone
+     const smartRecs = getSmartRecommendations();
+     const priorities = getMuscleGroupPriorities();
+     const totalRemaining = getTotalRemaining();
+     const sessionSize = Math.min(getSessionSize(priorities), 4);
+     
+     const accessoryNeeds = priorities
+       .filter(p => !p.isPrimary && p.remaining > 0)
+       .sort((a, b) => b.remaining - a.remaining)
+       .slice(0, 3);
+     
+     if (!smartRecs || smartRecs.length === 0) return;
+   
+     const exercisesDoneThisWeek = getExercisesDoneThisWeek();
+     
+     // Prefer exercises NOT done this week
+     const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
+     const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
+     const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+   
+     const chosen = [];
+     const usedCategories = new Set();
+   
+     // ==================== NEW: FATIGUE-AWARE SELECTION ====================
+     
+     // Helper: Does this exercise have low-fatigue options?
+     const hasEscapeHatch = (exerciseName) => {
+       const ex = exerciseLibrary[exerciseName];
+       return ex?.hasNonAxialVariants === true || ex?.isDefaultNonAxial === true;
+     };
+     
+     // Helper: Check if session has committed high-fatigue work
+     const sessionHasHighFatigue = () => {
+       // Session is high-fatigue if it has 1+ exercises WITHOUT escape hatches
+       const committedAxialExercises = chosen.filter(c => !hasEscapeHatch(c.exercise));
+       return committedAxialExercises.length >= 1;
+     };
+     
+     // Helper: Find low-fatigue posterior alternative
+     const findLowFatiguePosterior = (recs) => {
+       return recs.find(rec => 
+         rec.movementCategory === 'posterior' && 
+         hasEscapeHatch(rec.exercise) &&
+         !chosen.some(c => c.exercise === rec.exercise)
+       );
+     };
+     
+     // ======================================================================
+   
+     // First pass: one from each movement category (up to sessionSize)
+     shuffled.forEach(rec => {
+       if (chosen.length >= sessionSize) return;
+       const cat = rec.movementCategory || 'press';
+       
+       if (!usedCategories.has(cat)) {
+         
+         // ==================== FATIGUE-AWARE POSTERIOR SELECTION ====================
+         
+         // If this is posterior chain AND session already has high fatigue
+         if (cat === 'posterior' && sessionHasHighFatigue()) {
+           // Try to find a low-fatigue posterior alternative
+           const alternative = findLowFatiguePosterior(shuffled);
+           
+           if (alternative && !chosen.some(c => c.exercise === alternative.exercise)) {
+             chosen.push(alternative);
+             usedCategories.add(cat);
+             return; // Exit early - we found our low-fatigue option
+           }
+         }
+         
+         // ===========================================================================
+         
+         // Otherwise proceed normally
+         chosen.push(rec);
+         usedCategories.add(cat);
+       }
+     });
+   
+     // Second pass: fill remaining slots
+     if (chosen.length < sessionSize) {
+       shuffled.forEach(rec => {
+         if (chosen.length >= sessionSize) return;
+         if (!chosen.some(c => c.exercise === rec.exercise)) {
+           
+           // ==================== FATIGUE-AWARE SECOND PASS ====================
+           
+           // For posterior exercises in second pass, also prefer low-fatigue if session is already hard
+           if (rec.movementCategory === 'posterior' && sessionHasHighFatigue()) {
+             // Only add if it has escape hatch OR no better option exists
+             if (hasEscapeHatch(rec.exercise)) {
+               chosen.push(rec);
+             }
+             // Skip high-fatigue posterior in second pass if session is already hard
+           } else {
+             // Non-posterior or session isn't fatiguing yet - add normally
+             chosen.push(rec);
+           }
+           
+           // ===================================================================
+         }
+       });
+     }
+   
+     if (chosen.length === 0) return;
+   
+     // RANDOMIZE THE ORDER - don't always put highest priority first
+     const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
+   
+     // 35% chance to add an accessory finisher (only if session has room)
+     let finisher = null;
+     const shouldAddFinisher =
+       accessoryNeeds &&
+       accessoryNeeds.length > 0 &&
+       chosen.length < 4 &&
+       Math.random() < 0.35;
+   
+     if (shouldAddFinisher) {
+       const topAccessoryNeed = accessoryNeeds[0];
+       const accessoryCandidates = Object.entries(exerciseLibrary)
+         .filter(([name, data]) => data.category === 'accessory')
+         .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
+   
+       if (accessoryCandidates.length > 0) {
+         const [name, data] =
+           accessoryCandidates[
+             Math.floor(Math.random() * accessoryCandidates.length)
+           ];
+   
+         const primaryMuscle =
+           Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
+           topAccessoryNeed.muscle;
+   
+         finisher = {
+           exercise: name,
+           score: null,
+           targets: [topAccessoryNeed.muscle],
+           primaryMuscle,
+           category: data.category,
+           variants: data.variants,
+           movementCategory: data.movementCategory || 'accessory'
+         };
+       }
+     }
+   
+     const [tier1, tier2, tier3, tier4, tier5, tier6] = randomizedOrder;
+   
+     setStructuredSession({
+       lift: 'Priority-based',
+       tier1,
+       tier2: tier2 || null,
+       tier3: tier3 || null,
+       tier4: tier4 || finisher || null,
+       tier5: tier5 || null,
+       tier6: tier6 || null
+     });
+     
+     setSessionProgress({}); // Reset progress for new session
+     
+     const sizeLabel = sessionSize === 2 ? 'quick finisher' : 
+                       sessionSize === 3 ? 'light session' :
+                       sessionSize === 4 ? 'balanced session' :
+                       sessionSize === 5 ? 'solid session' : 
+                       'big session';
+     
+     // ==================== SMART TOAST FEEDBACK ====================
+     
+     // Check if we intelligently swapped to low-fatigue posterior
+     const hasSquat = chosen.some(c => c.exercise === 'Squats');
+     const hasDeadlift = chosen.some(c => c.exercise === 'Deadlifts');
+     const hasHipThrust = chosen.some(c => c.exercise === 'Hip Thrusts / Bridges');
+     const hasOHP = chosen.some(c => c.exercise === 'Overhead Press');
+     
+     // If we chose hip thrust after having a committed axial exercise
+     if ((hasSquat || hasOHP || hasDeadlift) && hasHipThrust && !hasDeadlift) {
+       showToast(`${sessionSize}-exercise ${sizeLabel} - glute work over deadlifts (lower fatigue) 💡`, 'success', '💪');
+     } else {
+       showToast(`${sessionSize}-exercise ${sizeLabel} built from your top gaps!`, 'success', '💪');
+     }
+     
+     // ==============================================================
+     
+   }, [getSmartRecommendations, getMuscleGroupPriorities, getTotalRemaining, getSessionSize, showToast, getExercisesDoneThisWeek]);
+         // Logging
+         const logWorkout = useCallback((exercise, variant, sets) => {
+           const newEntry = {
+             exercise,
+             variant,
+             sets,
+             date: new Date().toISOString(),
+             id: Date.now()
+           };
+           
+           // Check if this completes a muscle group
+           const currentVolume = calculateCurrentWeekVolume();
+           const ex = exerciseLibrary[exercise];
+           if (ex) {
+             Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
+               if (allMuscles.includes(muscle)) {
+                 const newVolume = (currentVolume[muscle] || 0) + (sets * multiplier);
+                 const wasIncomplete = currentVolume[muscle] < medTarget;
+                 const nowComplete = newVolume >= medTarget;
+                 
+                 if (wasIncomplete && nowComplete) {
+                   triggerConfetti();
+                   showToast(`${muscle.charAt(0).toUpperCase() + muscle.slice(1)} target hit! 🎉`, 'celebration', '🎯');
+                 }
+               }
+             });
+           }
+           
+           setWorkoutHistory(prev => [...prev, newEntry]);
+   
+           if (majorLifts[exercise]) {
+             setLastStrengthWorkout(prev => ({
+               ...prev,
+               [exercise]: new Date().toISOString()
+             }));
+           }
+   
+           setLastUsedVariants(prev => ({
+             ...prev,
+             [exercise]: variant
+           }));
+           
+           // Track session progress
+           if (structuredSession) {
+             setSessionProgress(prev => {
+               const updated = { ...prev, [exercise]: true };
+               
+               // Check if all session exercises are complete
+               const allExercises = [
+                 structuredSession.tier1?.exercise,
+                 structuredSession.tier2?.exercise,
+                 structuredSession.tier3?.exercise,
+                 structuredSession.tier4?.exercise,
+                 structuredSession.tier5?.exercise,
+                 structuredSession.tier6?.exercise
+               ].filter(Boolean);
+               
+               const allComplete = allExercises.every(ex => updated[ex]);
+               
+               if (allComplete && !prev._celebrated) {
+                 // Trigger "As Rx'd!" celebration
+                 setTimeout(() => {
+                   triggerConfetti();
+                   triggerConfetti(); // Double confetti!
+                   showToast('Session Complete - As Rx\'d! 💪🔥', 'celebration', '🏆');
+                 }, 500);
+                 updated._celebrated = true;
+               }
+               
+               return updated;
+             });
+           }
+           
+           showToast(`Logged ${sets} sets of ${variant}`, 'success', '✓');
+           
+           // Update personal bests
+           const updatedVolume = { ...currentVolume };
+           if (ex) {
+             Object.entries(ex.muscles).forEach(([muscle, multiplier]) => {
+               if (allMuscles.includes(muscle)) {
+                 updatedVolume[muscle] = (updatedVolume[muscle] || 0) + (sets * multiplier);
+               }
+             });
+           }
+           updatePersonalBests(updatedVolume);
+           
+           // Check for "almost done" muscles (1-2 sets away from MED target)
+           setTimeout(() => {
+              if (showAlmostDone) return;
+             const almostDone = [];
+             allMuscles.forEach(muscle => {
+               const current = updatedVolume[muscle] || 0;
+               const remaining = medTarget - current;
+               
+               if (remaining > 0 && remaining <= 2) {
+                 // Find quick ACCESSORY exercises that could complete this muscle (no big compounds!)
+                 const quickExercises = Object.entries(exerciseLibrary)
+                   .filter(([name, data]) => {
+                     const muscleContribution = data.muscles[muscle] || 0;
+                     // ONLY accessories - no heavy compound lifts for quick finishers
+                     return muscleContribution >= 0.8 && data.category === 'accessory';
+                   })
+                   .map(([name, data]) => ({
+                     exercise: name,
+                     remaining: remaining,
+                     muscle: muscle,
+                     category: data.category,
+                     variants: data.variants,
+                     movementCategory: data.movementCategory
+                   }));
+                 
+                 if (quickExercises.length > 0) {
+                   almostDone.push({
+                     muscle,
+                     remaining: remaining.toFixed(1),
+                     exercises: quickExercises.slice(0, 3) // Top 3 suggestions
+                   });
+                 }
+               }
+             });
+             
+             if (almostDone.length > 0) {
+               setAlmostDoneSuggestions(almostDone);
+               setShowAlmostDone(true);
+             }
+           }, 1000); // Small delay so confetti/toasts appear first
+         }, [calculateCurrentWeekVolume, medTarget, showToast, updatePersonalBests, structuredSession, showAlmostDone]);
 
       // Derived
       const priorities = getMuscleGroupPriorities();
