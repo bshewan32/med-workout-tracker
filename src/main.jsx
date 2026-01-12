@@ -25,6 +25,116 @@ import "./styles.css";
           'Belt Squat'
         ]
       },
+       // ========== POSTERIOR CHAIN (HIP-DOMINANT) ==========
+
+      'Deadlifts': {
+        muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
+        category: 'primary',
+        movementCategory: 'posterior',
+        hasNonAxialVariants: false,  // ← All variants load spine heavily
+        variants: [
+          'Conventional Deadlift',
+          'Sumo Deadlift',
+          'Trap Bar Deadlift',
+          'Romanian Deadlift',
+          'Deficit Deadlift',
+          'Block Pull'
+        ]
+      },
+      
+      'Hip Thrusts / Bridges': {
+        muscles: { glutes: 1, hamstrings: 0.5 },
+        category: 'primary',
+        movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        hasNonAxialVariants: true,
+        variants: [
+          'Barbell Hip Thrust',
+          'Dumbbell Hip Thrust',
+          'Smith Machine Hip Thrust',
+          'Hip Thrust Machine',
+          'Single-Leg Hip Thrust',
+          'Banded Hip Thrust',
+          'Glute Bridge',
+          'Single-Leg Glute Bridge',
+          'Banded Glute Bridge',
+          'Barbell Glute Bridge'
+        ]
+      },
+      
+      'Back Extensions': {
+        muscles: { glutes: 0.8, hamstrings: 0.7, core: 0.3 },
+        category: 'primary',  // ← PROMOTED from accessory
+        movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        variants: [
+          '45° Back Extension (Glute Focus)',
+          'Horizontal Back Extension',
+          'Reverse Hyper',
+          'Natural Glute Ham Raise'
+        ]
+      },
+      
+      'Cable Pull-Through': {
+        muscles: { glutes: 1, hamstrings: 0.6 },
+        category: 'primary',  // ← NEW EXERCISE
+        movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        variants: [
+          'Cable Pull-Through',
+          'Band Pull-Through',
+          'Kettlebell Swing'
+        ]
+      },
+      
+      'GHD Hip Extension': {
+        muscles: { glutes: 1, hamstrings: 0.8 },
+        category: 'primary',  // ← NEW EXERCISE
+        movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        variants: [
+          'GHD Hip Extension',
+          'GHD Back Extension (Hip Focus)'
+        ]
+      },
+      
+      'Leg Curls': {
+        muscles: { hamstrings: 1 },
+        category: 'primary',  // ← PROMOTED from accessory
+        movementCategory: 'posterior',
+        isDefaultNonAxial: true,
+        variants: [
+          'Lying Leg Curl',
+          'Seated Leg Curl',
+          'Standing Leg Curl',
+          'Nordic Curl'
+        ]
+      },
+      
+      'Single-Leg RDL': {
+        muscles: { glutes: 1, hamstrings: 0.9, core: 0.4 },
+        category: 'primary',  // ← NEW EXERCISE
+        movementCategory: 'posterior',
+        hasNonAxialVariants: true,  // ← Lower load = less fatigue
+        variants: [
+          'Dumbbell Single-Leg RDL',
+          'Kettlebell Single-Leg RDL',
+          'Barbell Single-Leg RDL',
+          'Kickstand RDL'
+        ]
+      },
+      
+      'Good Mornings': {
+        muscles: { glutes: 0.8, hamstrings: 1, core: 0.5 },
+        category: 'primary',  // ← NEW EXERCISE
+        movementCategory: 'posterior',
+        hasNonAxialVariants: false,  // ← Still axial, not an escape hatch
+        variants: [
+          'Barbell Good Morning',
+          'Safety Bar Good Morning',
+          'Seated Good Morning'
+        ]
+      },     
       'Bench Press': {
         muscles: { chest: 1, triceps: 0.6, shoulders: 0.4 },
         category: 'primary',
@@ -50,13 +160,6 @@ import "./styles.css";
           'Seated Dumbbell Shoulder Press',
           'Machine Shoulder Press'
         ]
-      },
-      'Deadlifts': {
-        muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        hasNonAxialVariants: false, 
-        variants: ['Conventional Deadlift', 'Sumo Deadlift', 'Trap Bar Deadlift', 'Romanian Deadlift', 'Deficit Deadlift']
       },
       'Rows': {
         muscles: { upperBack: 1, lats: 0.6, biceps: 0.4 },
@@ -85,25 +188,6 @@ import "./styles.css";
           'Step-ups'
         ]
       },
-      'Hip Thrusts / Bridges': {
-        muscles: { glutes: 1, hamstrings: 0.5 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        isDefaultNonAxial: true,
-        hasNonAxialVariants: true, 
-        variants: [
-          'Barbell Hip Thrust',
-          'Dumbbell Hip Thrust',
-          'Smith Machine Hip Thrust',
-          'Single-Leg Hip Thrust',
-          'Banded Hip Thrust',
-          'Glute Bridge',
-          'Single-Leg Glute Bridge',
-          'Banded Glute Bridge',
-          'Barbell Glute Bridge',
-          'Machine Hip Thrust'
-        ]
-      },
       'Cable Kickbacks': {
         muscles: { glutes: 1 },
         category: 'accessory',
@@ -115,12 +199,6 @@ import "./styles.css";
         category: 'accessory',
         movementCategory: 'posterior',
         variants: ['Abduction Machine', 'Banded Hip Abduction', 'Side-Lying Hip Abduction', 'Standing Cable Abduction']
-      },
-      'Leg Curls': {
-        muscles: { hamstrings: 1 },
-        category: 'accessory',
-        movementCategory: 'posterior',
-        variants: ['Lying Leg Curl', 'Seated Leg Curl', 'Nordic Curl']
       },
       'Leg Extensions': {
         muscles: { quads: 1 },
@@ -205,13 +283,7 @@ import "./styles.css";
         category: 'accessory',
         movementCategory: 'accessory',
         variants: ['Front Plank', 'Side Plank', 'Weighted Plank']
-      },
-      'Back Extensions': {
-        muscles: { glutes: 0.6, hamstrings: 0.6, core: 0.4 },
-        category: 'accessory',
-        movementCategory: 'posterior',
-        variants: ['Back Extensions', 'Reverse Hyper']
-      },
+      },      
       'Loaded Carries': {
         muscles: { upperBack: 0.6, core: 1, glutes: 0.4 },
         category: 'accessory',
