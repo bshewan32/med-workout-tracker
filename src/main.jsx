@@ -100,7 +100,7 @@ import "./styles.css";
           'Glute Bridge',
           'Single-Leg Glute Bridge',
           'Banded Glute Bridge',
-          'Barbell Glute Bridge'
+          'Barbell Glute Bridge',
           'Machine Hip Thrust'
         ]
       },
