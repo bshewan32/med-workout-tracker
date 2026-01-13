@@ -11,34 +11,51 @@ import "./styles.css";
         muscles: { quads: 1, glutes: 0.6, core: 0.3 },
         category: 'primary',
         movementCategory: 'squat',
-        hasNonAxialVariants: true,
+        axialCost: 'high',  // ← Default (back/front squat)
+        hasLowerCostVariants: true,  // ← Belt squat, leg press exist
         variants: [
-          'Back Squat',
-          'Front Squat',
-          'Safety Bar Squat',
-          'Hack Squat',
-          'Pendulum Squat',
-          'Goblet Squat',
-          'Leg Press',
-          'Single-Leg Press',
-          'Hack Squat Machine',
-          'Belt Squat'
+          'Back Squat',           // High
+          'Front Squat',          // High
+          'Safety Bar Squat',     // High
+          'Goblet Squat',         // Low-Moderate (lighter loads)
+          'Hack Squat',           // Low
+          'Pendulum Squat',       // Low
+          'Leg Press',            // Low
+          'Single-Leg Press',     // Low
+          'Hack Squat Machine',   // Low
+          'Belt Squat'            // Low (zero spine load)
         ]
       },
-       // ========== POSTERIOR CHAIN (HIP-DOMINANT) ==========
-
+      
+      'Lunges': {
+        muscles: { quads: 1, glutes: 0.8 },
+        category: 'primary',
+        movementCategory: 'squat',
+        axialCost: 'moderate',  // ← Unilateral = lower absolute load
+        hasLowerCostVariants: true,
+        variants: [
+          'Walking Lunges',         // Moderate
+          'Reverse Lunges',         // Moderate
+          'Bulgarian Split Squats', // Moderate-High
+          'Static Lunges',          // Moderate
+          'Step-ups'                // Low-Moderate
+        ]
+      },
+       
       'Deadlifts': {
         muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
         category: 'primary',
         movementCategory: 'posterior',
-        hasNonAxialVariants: false,  // ← All variants load spine heavily
+        axialCost: 'high',  // ← Primary classification
+        posteriorType: 'hinge',
+        hasLowerCostVariants: true,  // ← Trap bar is moderately cheaper
         variants: [
-          'Conventional Deadlift',
-          'Sumo Deadlift',
-          'Trap Bar Deadlift',
-          'Romanian Deadlift',
-          'Deficit Deadlift',
-          'Block Pull'
+          'Conventional Deadlift',  // High
+          'Sumo Deadlift',          // High
+          'Trap Bar Deadlift',      // Moderate-High (lighter, easier)
+          'Romanian Deadlift',      // High
+          'Deficit Deadlift',       // High
+          'Block Pull'              // Moderate (partial ROM)
         ]
       },
       
@@ -46,8 +63,9 @@ import "./styles.css";
         muscles: { glutes: 1, hamstrings: 0.5 },
         category: 'primary',
         movementCategory: 'posterior',
-        isDefaultNonAxial: true,
-        hasNonAxialVariants: true,
+        axialCost: 'low',  // ← Perfect escape hatch
+        posteriorType: 'glute',
+        hasLowerCostVariants: false,  // Already cheap
         variants: [
           'Barbell Hip Thrust',
           'Dumbbell Hip Thrust',
@@ -64,9 +82,11 @@ import "./styles.css";
       
       'Back Extensions': {
         muscles: { glutes: 0.8, hamstrings: 0.7, core: 0.3 },
-        category: 'primary',  // ← PROMOTED from accessory
+        category: 'primary',
         movementCategory: 'posterior',
-        isDefaultNonAxial: true,
+        axialCost: 'moderate',  // ← NOT "non-axial", but cheaper than deadlifts
+        posteriorType: 'mixed',
+        hasLowerCostVariants: false,
         variants: [
           '45° Back Extension (Glute Focus)',
           'Horizontal Back Extension',
@@ -77,9 +97,11 @@ import "./styles.css";
       
       'Cable Pull-Through': {
         muscles: { glutes: 1, hamstrings: 0.6 },
-        category: 'primary',  // ← NEW EXERCISE
+        category: 'primary',
         movementCategory: 'posterior',
-        isDefaultNonAxial: true,
+        axialCost: 'low',  // ← Great escape hatch
+        posteriorType: 'glute',
+        hasLowerCostVariants: false,
         variants: [
           'Cable Pull-Through',
           'Band Pull-Through',
@@ -89,9 +111,11 @@ import "./styles.css";
       
       'GHD Hip Extension': {
         muscles: { glutes: 1, hamstrings: 0.8 },
-        category: 'primary',  // ← NEW EXERCISE
+        category: 'primary',
         movementCategory: 'posterior',
-        isDefaultNonAxial: true,
+        axialCost: 'moderate',  // ← Can hammer erectors, not "free"
+        posteriorType: 'mixed',
+        hasLowerCostVariants: false,
         variants: [
           'GHD Hip Extension',
           'GHD Back Extension (Hip Focus)'
@@ -100,9 +124,11 @@ import "./styles.css";
       
       'Leg Curls': {
         muscles: { hamstrings: 1 },
-        category: 'primary',  // ← PROMOTED from accessory
+        category: 'primary',
         movementCategory: 'posterior',
-        isDefaultNonAxial: true,
+        axialCost: 'low',  // ← Pure isolation, minimal fatigue
+        posteriorType: 'hamstring',
+        hasLowerCostVariants: false,
         variants: [
           'Lying Leg Curl',
           'Seated Leg Curl',
@@ -113,9 +139,11 @@ import "./styles.css";
       
       'Single-Leg RDL': {
         muscles: { glutes: 1, hamstrings: 0.9, core: 0.4 },
-        category: 'primary',  // ← NEW EXERCISE
+        category: 'primary',
         movementCategory: 'posterior',
-        hasNonAxialVariants: true,  // ← Lower load = less fatigue
+        axialCost: 'moderate',  // ← Still a hinge, still bracing
+        posteriorType: 'hinge',
+        hasLowerCostVariants: false,
         variants: [
           'Dumbbell Single-Leg RDL',
           'Kettlebell Single-Leg RDL',
@@ -126,69 +154,80 @@ import "./styles.css";
       
       'Good Mornings': {
         muscles: { glutes: 0.8, hamstrings: 1, core: 0.5 },
-        category: 'primary',  // ← NEW EXERCISE
+        category: 'primary',
         movementCategory: 'posterior',
-        hasNonAxialVariants: false,  // ← Still axial, not an escape hatch
+        axialCost: 'high',  // ← Very demanding on erectors
+        posteriorType: 'hinge',
+        hasLowerCostVariants: false,
         variants: [
           'Barbell Good Morning',
           'Safety Bar Good Morning',
           'Seated Good Morning'
         ]
-      },     
+      },
+       
+     'Overhead Press': {
+        muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
+        category: 'primary',
+        movementCategory: 'press',
+        axialCost: 'low', // overall: axial load is not the limiting factor like squat/deadlift
+        hasLowerCostVariants: true, // lower bracing/stability options exist (seated/machine)
+        variants: [
+          'Standing Barbell Overhead Press',  // higher stability/bracing demand (still low axial)
+          'Seated Dumbbell Shoulder Press',   // moderate stability/bracing demand
+          'Machine Shoulder Press'            // lowest stability/bracing demand
+        ]
+      },
+      
       'Bench Press': {
         muscles: { chest: 1, triceps: 0.6, shoulders: 0.4 },
         category: 'primary',
         movementCategory: 'press',
-        isDefaultNonAxial: true,
+        axialCost: 'low',  // ← Minimal spine involvement
+        hasLowerCostVariants: false,
         variants: [
           'Flat Barbell Bench',
-          'Incline Bench',
+          'Incline Barbell Bench',
           'Close Grip Bench',
-          'Dumbbell Press',
+          'Flat Dumbbell Press',
+          'Incline Dumbbell Press',
           'Machine Press',
+          'Machine Incline Press',
           'Push-ups',
           'Deficit Push-ups'
         ]
       },
-      'Overhead Press': {
-        muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
-        category: 'primary',
-        movementCategory: 'press',
-        isDefaultNonAxial: true,
-        variants: [
-          'Standing Barbell Overhead Press',
-          'Seated Dumbbell Shoulder Press',
-          'Machine Shoulder Press'
-        ]
-      },
+      
       'Rows': {
         muscles: { upperBack: 1, lats: 0.6, biceps: 0.4 },
         category: 'primary',
         movementCategory: 'pull',
-        hasNonAxialVariants: true, 
-        variants: ['Barbell Row', 'Dumbbell Row', 'Chest-Supported Row', 'Cable Row']
+        axialCost: 'moderate',  // ← Bent-over rows load spine
+        hasLowerCostVariants: true,  // ← Chest-supported exists
+        variants: [
+          'Barbell Row',            // Moderate-High
+          'Dumbbell Row',           // Moderate
+          'Chest-Supported Row',    // Low
+          'Cable Row'               // Low-Moderate
+        ]
       },
+      
       'Pull-ups': {
         muscles: { lats: 1, upperBack: 0.4, biceps: 0.6 },
         category: 'primary',
         movementCategory: 'pull',
-        isDefaultNonAxial: true,
-        variants: ['Pull-ups', 'Chin-ups', 'Neutral Grip', 'Band-Assisted Pull-ups', 'Assisted Pull-up Machine', 'Lat Pulldown']
-      },
-      'Lunges': {
-        muscles: { quads: 1, glutes: 0.8 },
-        category: 'primary',
-        movementCategory: 'squat',
-        hasNonAxialVariants: true,
+        axialCost: 'low',  // ← Hanging = minimal spine compression
+        hasLowerCostVariants: false,
         variants: [
-          'Walking Lunges',
-          'Reverse Lunges',
-          'Bulgarian Split Squats',
-          'Static Lunges',
-          'Step-ups'
+          'Pull-ups',
+          'Chin-ups',
+          'Neutral Grip',
+          'Band-Assisted Pull-ups',
+          'Assisted Pull-up Machine',
+          'Lat Pulldown'
         ]
       },
-      'Cable Kickbacks': {
+     'Cable Kickbacks': {
         muscles: { glutes: 1 },
         category: 'accessory',
         movementCategory: 'posterior',
@@ -962,189 +1001,251 @@ import "./styles.css";
       };
 
       const buildPrioritySessionFromTopRecs = useCallback(() => {
-     // Compute fresh to avoid temporal dead zone
-     const smartRecs = getSmartRecommendations();
-     const priorities = getMuscleGroupPriorities();
-     const totalRemaining = getTotalRemaining();
-     const sessionSize = Math.min(getSessionSize(priorities), 4);
-     
-     const accessoryNeeds = priorities
-       .filter(p => !p.isPrimary && p.remaining > 0)
-       .sort((a, b) => b.remaining - a.remaining)
-       .slice(0, 3);
-     
-     if (!smartRecs || smartRecs.length === 0) return;
-   
-     const exercisesDoneThisWeek = getExercisesDoneThisWeek();
-     
-     // Prefer exercises NOT done this week
-     const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
-     const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
-     const shuffled = [...topPool].sort(() => Math.random() - 0.5);
-   
-     const chosen = [];
-     const usedCategories = new Set();
-   
-     // ==================== NEW: FATIGUE-AWARE SELECTION ====================
-     
-     // Helper: Does this exercise have low-fatigue options?
-     const hasEscapeHatch = (exerciseName) => {
-       const ex = exerciseLibrary[exerciseName];
-       return ex?.hasNonAxialVariants === true || ex?.isDefaultNonAxial === true;
-     };
-     
-     // Helper: Check if session has committed high-fatigue work
-     const sessionHasHighFatigue = () => {
-       // Session is high-fatigue if it has 1+ exercises WITHOUT escape hatches
-       const committedAxialExercises = chosen.filter(c => !hasEscapeHatch(c.exercise));
-       return committedAxialExercises.length >= 1;
-     };
-     
-     // Helper: Find low-fatigue posterior alternative
-     const findLowFatiguePosterior = (recs) => {
-       return recs.find(rec => 
-         rec.movementCategory === 'posterior' && 
-         hasEscapeHatch(rec.exercise) &&
-         !chosen.some(c => c.exercise === rec.exercise)
-       );
-     };
-     
-     // ======================================================================
-   
-     // First pass: one from each movement category (up to sessionSize)
-     shuffled.forEach(rec => {
-       if (chosen.length >= sessionSize) return;
-       const cat = rec.movementCategory || 'press';
-       
-       if (!usedCategories.has(cat)) {
-         
-         // ==================== FATIGUE-AWARE POSTERIOR SELECTION ====================
-         
-         // If this is posterior chain AND session already has high fatigue
-         if (cat === 'posterior' && sessionHasHighFatigue()) {
-           // Try to find a low-fatigue posterior alternative
-           const alternative = findLowFatiguePosterior(shuffled);
-           
-           if (alternative && !chosen.some(c => c.exercise === alternative.exercise)) {
-             chosen.push(alternative);
-             usedCategories.add(cat);
-             return; // Exit early - we found our low-fatigue option
-           }
-         }
-         
-         // ===========================================================================
-         
-         // Otherwise proceed normally
-         chosen.push(rec);
-         usedCategories.add(cat);
-       }
-     });
-   
-     // Second pass: fill remaining slots
-     if (chosen.length < sessionSize) {
-       shuffled.forEach(rec => {
-         if (chosen.length >= sessionSize) return;
-         if (!chosen.some(c => c.exercise === rec.exercise)) {
-           
-           // ==================== FATIGUE-AWARE SECOND PASS ====================
-           
-           // For posterior exercises in second pass, also prefer low-fatigue if session is already hard
-           if (rec.movementCategory === 'posterior' && sessionHasHighFatigue()) {
-             // Only add if it has escape hatch OR no better option exists
-             if (hasEscapeHatch(rec.exercise)) {
-               chosen.push(rec);
-             }
-             // Skip high-fatigue posterior in second pass if session is already hard
-           } else {
-             // Non-posterior or session isn't fatiguing yet - add normally
-             chosen.push(rec);
-           }
-           
-           // ===================================================================
-         }
-       });
-     }
-   
-     if (chosen.length === 0) return;
-   
-     // RANDOMIZE THE ORDER - don't always put highest priority first
-     const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
-   
-     // 35% chance to add an accessory finisher (only if session has room)
-     let finisher = null;
-     const shouldAddFinisher =
-       accessoryNeeds &&
-       accessoryNeeds.length > 0 &&
-       chosen.length < 4 &&
-       Math.random() < 0.35;
-   
-     if (shouldAddFinisher) {
-       const topAccessoryNeed = accessoryNeeds[0];
-       const accessoryCandidates = Object.entries(exerciseLibrary)
-         .filter(([name, data]) => data.category === 'accessory')
-         .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
-   
-       if (accessoryCandidates.length > 0) {
-         const [name, data] =
-           accessoryCandidates[
-             Math.floor(Math.random() * accessoryCandidates.length)
-           ];
-   
-         const primaryMuscle =
-           Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
-           topAccessoryNeed.muscle;
-   
-         finisher = {
-           exercise: name,
-           score: null,
-           targets: [topAccessoryNeed.muscle],
-           primaryMuscle,
-           category: data.category,
-           variants: data.variants,
-           movementCategory: data.movementCategory || 'accessory'
-         };
-       }
-     }
-   
-     const [tier1, tier2, tier3, tier4, tier5, tier6] = randomizedOrder;
-   
-     setStructuredSession({
-       lift: 'Priority-based',
-       tier1,
-       tier2: tier2 || null,
-       tier3: tier3 || null,
-       tier4: tier4 || finisher || null,
-       tier5: tier5 || null,
-       tier6: tier6 || null
-     });
-     
-     setSessionProgress({}); // Reset progress for new session
-     
-     const sizeLabel = sessionSize === 2 ? 'quick finisher' : 
-                       sessionSize === 3 ? 'light session' :
-                       sessionSize === 4 ? 'balanced session' :
-                       sessionSize === 5 ? 'solid session' : 
-                       'big session';
-     
-     // ==================== SMART TOAST FEEDBACK ====================
-     
-     // Check if we intelligently swapped to low-fatigue posterior
-     const hasSquat = chosen.some(c => c.exercise === 'Squats');
-     const hasDeadlift = chosen.some(c => c.exercise === 'Deadlifts');
-     const hasHipThrust = chosen.some(c => c.exercise === 'Hip Thrusts / Bridges');
-     const hasOHP = chosen.some(c => c.exercise === 'Overhead Press');
-     
-     // If we chose hip thrust after having a committed axial exercise
-     if ((hasSquat || hasOHP || hasDeadlift) && hasHipThrust && !hasDeadlift) {
-       showToast(`${sessionSize}-exercise ${sizeLabel} - glute work over deadlifts (lower fatigue) 💡`, 'success', '💪');
-     } else {
-       showToast(`${sessionSize}-exercise ${sizeLabel} built from your top gaps!`, 'success', '💪');
-     }
-     
-     // ==============================================================
-     
-   }, [getSmartRecommendations, getMuscleGroupPriorities, getTotalRemaining, getSessionSize, showToast, getExercisesDoneThisWeek]);
-         // Logging
+        // Compute fresh to avoid temporal dead zone
+        const smartRecs = getSmartRecommendations();
+        const priorities = getMuscleGroupPriorities();
+        
+        // Calculate totalRemaining for session sizing
+        const totalRemaining = priorities
+          .filter(p => p.isPrimary)
+          .reduce((sum, p) => sum + p.remaining, 0);
+        
+        // FIX #1: Actually USE totalRemaining (not priorities)
+        const sessionSize = Math.min(getSessionSize(totalRemaining), 4);
+        
+        const accessoryNeeds = priorities
+          .filter(p => !p.isPrimary && p.remaining > 0)
+          .sort((a, b) => b.remaining - a.remaining)
+          .slice(0, 3);
+        
+        if (!smartRecs || smartRecs.length === 0) return;
+      
+        const exercisesDoneThisWeek = getExercisesDoneThisWeek();
+        
+        // Prefer exercises NOT done this week
+        const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
+        const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
+        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+      
+        const chosen = [];
+        const usedCategories = new Set();
+        
+        // ==================== AXIAL BUDGET TRACKING ====================
+        
+        let highAxialCount = 0;
+        let moderateAxialCount = 0;
+        
+        const MAX_HIGH_AXIAL = 1;
+        const MAX_MODERATE_AXIAL = 2;
+        
+        // Helper: Get axial cost for an exercise
+        const getAxialCost = (exerciseName) => {
+          const ex = exerciseLibrary[exerciseName];
+          return ex?.axialCost || 'low';  // Default to low (safe)
+        };
+        
+        // Helper: Can we afford to add this exercise?
+        const canAffordAxialCost = (exerciseName) => {
+          const cost = getAxialCost(exerciseName);
+          if (cost === 'high') {
+            return highAxialCount < MAX_HIGH_AXIAL;
+          }
+          if (cost === 'moderate') {
+            return moderateAxialCount < MAX_MODERATE_AXIAL;
+          }
+          return true;  // Low is always affordable
+        };
+        
+        // Helper: Track axial cost when adding exercise
+        const trackAxialCost = (exerciseName) => {
+          const cost = getAxialCost(exerciseName);
+          if (cost === 'high') {
+            highAxialCount++;
+          } else if (cost === 'moderate') {
+            moderateAxialCount++;
+          }
+        };
+        
+        // FIX #4: Randomized alternative selection (prevents repetitive substitutions)
+        // Helper: Find affordable alternative for a given category
+        const findAffordableAlternative = (category) => {
+          // Try low-cost first (always affordable)
+          const lowCostCandidates = smartRecs.filter(rec => 
+            rec.movementCategory === category && 
+            getAxialCost(rec.exercise) === 'low' &&
+            !chosen.some(c => c.exercise === rec.exercise) &&
+            !usedCategories.has(category)
+          );
+          
+          if (lowCostCandidates.length > 0) {
+            // Random selection from low-cost options
+            return lowCostCandidates[Math.floor(Math.random() * lowCostCandidates.length)];
+          }
+          
+          // If no low-cost, try moderate (if we have budget)
+          if (moderateAxialCount < MAX_MODERATE_AXIAL) {
+            const moderateCostCandidates = smartRecs.filter(rec => 
+              rec.movementCategory === category && 
+              getAxialCost(rec.exercise) === 'moderate' &&
+              !chosen.some(c => c.exercise === rec.exercise) &&
+              !usedCategories.has(category)
+            );
+            
+            if (moderateCostCandidates.length > 0) {
+              // Random selection from moderate-cost options
+              return moderateCostCandidates[Math.floor(Math.random() * moderateCostCandidates.length)];
+            }
+          }
+          
+          return null;  // No affordable alternative found
+        };
+        
+        // ===============================================================
+      
+        // First pass: one from each movement category
+        shuffled.forEach(rec => {
+          if (chosen.length >= sessionSize) return;
+          const cat = rec.movementCategory || 'press';
+          
+          if (!usedCategories.has(cat)) {
+            
+            // FIX #2: Generic swap logic - handles ANY budget constraint
+            // Check if we can afford this exercise
+            if (!canAffordAxialCost(rec.exercise)) {
+              // Can't afford it - try to find a cheaper alternative
+              const alternative = findAffordableAlternative(cat);
+              
+              if (alternative) {
+                chosen.push(alternative);
+                usedCategories.add(cat);
+                trackAxialCost(alternative.exercise);
+                return;
+              }
+              
+              // No affordable alternative found - skip this category for now
+              return;
+            }
+            
+            // Can afford it - add normally
+            chosen.push(rec);
+            usedCategories.add(cat);
+            trackAxialCost(rec.exercise);
+          }
+        });
+      
+        // FIX #3: Second pass with fallback to full smartRecs
+        // Try topPool first, then fall back to full list if needed
+        if (chosen.length < sessionSize) {
+          // First attempt: use shuffled (topPool)
+          shuffled.forEach(rec => {
+            if (chosen.length >= sessionSize) return;
+            if (chosen.some(c => c.exercise === rec.exercise)) return;
+            
+            if (canAffordAxialCost(rec.exercise)) {
+              chosen.push(rec);
+              trackAxialCost(rec.exercise);
+            }
+          });
+          
+          // Second attempt: if still short, search full smartRecs
+          if (chosen.length < sessionSize) {
+            smartRecs.forEach(rec => {
+              if (chosen.length >= sessionSize) return;
+              if (chosen.some(c => c.exercise === rec.exercise)) return;
+              
+              if (canAffordAxialCost(rec.exercise)) {
+                chosen.push(rec);
+                trackAxialCost(rec.exercise);
+              }
+            });
+          }
+        }
+      
+        if (chosen.length === 0) return;
+      
+        // RANDOMIZE THE ORDER - don't always put highest priority first
+        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
+      
+        // 35% chance to add an accessory finisher (only if session has room)
+        let finisher = null;
+        const shouldAddFinisher =
+          accessoryNeeds &&
+          accessoryNeeds.length > 0 &&
+          chosen.length < 4 &&
+          Math.random() < 0.35;
+      
+        if (shouldAddFinisher) {
+          const topAccessoryNeed = accessoryNeeds[0];
+          const accessoryCandidates = Object.entries(exerciseLibrary)
+            .filter(([name, data]) => data.category === 'accessory')
+            .filter(([_, data]) => !!data.muscles[topAccessoryNeed.muscle]);
+      
+          if (accessoryCandidates.length > 0) {
+            const [name, data] =
+              accessoryCandidates[
+                Math.floor(Math.random() * accessoryCandidates.length)
+              ];
+      
+            const primaryMuscle =
+              Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
+              topAccessoryNeed.muscle;
+      
+            finisher = {
+              exercise: name,
+              score: null,
+              targets: [topAccessoryNeed.muscle],
+              primaryMuscle,
+              category: data.category,
+              variants: data.variants,
+              movementCategory: data.movementCategory || 'accessory'
+            };
+          }
+        }
+      
+        const [tier1, tier2, tier3, tier4, tier5, tier6] = randomizedOrder;
+      
+        setStructuredSession({
+          lift: 'Priority-based',
+          tier1,
+          tier2: tier2 || null,
+          tier3: tier3 || null,
+          tier4: tier4 || finisher || null,
+          tier5: tier5 || null,
+          tier6: tier6 || null
+        });
+        
+        setSessionProgress({}); // Reset progress for new session
+        
+        const sizeLabel = sessionSize === 2 ? 'quick finisher' : 
+                          sessionSize === 3 ? 'light session' :
+                          sessionSize === 4 ? 'balanced session' :
+                          sessionSize === 5 ? 'solid session' : 
+                          'big session';
+        
+        // ==================== SMART TOAST FEEDBACK ====================
+        
+        const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
+        const hasSwappedToLow = chosen.some(c => getAxialCost(c.exercise) === 'low');
+        const totalModerate = chosen.filter(c => getAxialCost(c.exercise) === 'moderate').length;
+        
+        let toastMessage = `${sessionSize}-exercise ${sizeLabel} built from your top gaps!`;
+        
+        // If we have high axial AND swapped something to low-cost
+        if (hasHighAxial && hasSwappedToLow && (highAxialCount === MAX_HIGH_AXIAL || moderateAxialCount === MAX_MODERATE_AXIAL)) {
+          toastMessage = `${sessionSize}-exercise ${sizeLabel} - smart fatigue management 💡`;
+        } 
+        // If we have 2 moderates but no high (manageable session)
+        else if (totalModerate === 2 && !hasHighAxial) {
+          toastMessage = `${sessionSize}-exercise ${sizeLabel} - manageable spine load ✓`;
+        }
+        
+        showToast(toastMessage, 'success', '💪');
+        
+        // =====================================================================
+        
+      }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek]);
+             
+       // Logging
          const logWorkout = useCallback((exercise, variant, sets) => {
            const newEntry = {
              exercise,
