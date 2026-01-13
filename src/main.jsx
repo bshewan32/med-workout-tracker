@@ -848,19 +848,36 @@ import "./styles.css";
       const getSmartRecommendations = useCallback(() => {
         const priorities = getMuscleGroupPriorities();
         const currentWeekVolume = calculateCurrentWeekVolume();
-
+      
         const topNeeds = priorities
           .filter(p => p.isPrimary && p.remaining > 0)
           .slice(0, 6);
-
+      
         const recs = [];
-
+        
+        // Track recent sessions by movement category (THIS WEEK only)
+        const thisWeekWorkouts = getCurrentWeekWorkouts();
+        const recentSessions = {
+          posterior: 0,
+          squat: 0,
+          pull: 0,
+          press: 0
+        };
+        
+        // Count how many times each category was done this week
+        thisWeekWorkouts.forEach(w => {
+          const ex = exerciseLibrary[w.exercise];
+          if (ex && ex.movementCategory) {
+            recentSessions[ex.movementCategory] = (recentSessions[ex.movementCategory] || 0) + 1;
+          }
+        });
+      
         Object.entries(exerciseLibrary).forEach(([exercise, data]) => {
           if (data.category === 'accessory') return;
-
+      
           let score = 0;
           const targets = [];
-
+      
           topNeeds.forEach(need => {
             const muscleScore = data.muscles[need.muscle] || 0;
             if (muscleScore > 0) {
@@ -872,13 +889,33 @@ import "./styles.css";
               targets.push(need.muscle);
             }
           });
-
+      
+          // UPDATED: Smart posterior penalty (only for expensive posterior work)
+          if (score > 0) {
+            const cat = data.movementCategory || 'press';
+      
+            if (cat === 'posterior') {
+              const n = recentSessions?.posterior || 0;
+      
+              // Only penalize "expensive" posterior movements
+              const expensive =
+                (data.axialCost && data.axialCost !== 'low') ||
+                (data.erectorCost && data.erectorCost !== 'low');
+      
+              if (expensive) {
+                // Progressive penalty: 2x = 30% off, 3x = 50% off
+                const penalty = n >= 3 ? 0.5 : n >= 2 ? 0.7 : 1.0;
+                score *= penalty;
+              }
+            }
+          }
+      
           if (score > 0) {
             const primaryMuscle =
               Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
               targets[0] ||
               'mixed';
-
+      
             recs.push({
               exercise,
               score: score.toFixed(1),
@@ -890,6 +927,7 @@ import "./styles.css";
             });
           }
         });
+
 
         // Only add major lifts if their movement pattern is completely missing
         const coveredCategories = new Set(recs.map(r => r.movementCategory));
@@ -3204,7 +3242,7 @@ import "./styles.css";
         
         return (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl">
               <div className="bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 px-6 py-8 text-center">
                 <div className="text-5xl mb-3">💪</div>
                 <h2 className="text-2xl font-black text-white mb-2">
