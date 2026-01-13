@@ -191,7 +191,7 @@ import "./styles.css";
         muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
         category: 'primary',
         movementCategory: 'press',
-        axialCost: 'low',  // ← Standing OHP loads spine significantly
+        axialCost: 'moderate',  // ← Standing OHP loads spine significantly
         erectorCost: 'moderate', 
         variants: [
           'Standing Barbell Overhead Press',  // High
@@ -1056,11 +1056,7 @@ import "./styles.css";
         
         const sessionSize = Math.min(getSessionSize(totalRemaining), 5);
         
-        const accessoryNeeds = priorities
-          .filter(p => !p.isPrimary && p.remaining > 0)
-          .sort((a, b) => b.remaining - a.remaining)
-          .slice(0, 3);
-        
+           
         if (!smartRecs || smartRecs.length === 0) return;
       
         const exercisesDoneThisWeek = getExercisesDoneThisWeek();
@@ -1259,7 +1255,7 @@ import "./styles.css";
         
         // ==============================================================
         
-      }, [getSmartRecommendations, getMuscleGroupPriorities, getTotalRemaining, getSessionSize, showToast, getExercisesDoneThisWeek]);
+      }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek]);
              
        // Logging
          const logWorkout = useCallback((exercise, variant, sets) => {
