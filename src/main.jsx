@@ -7,175 +7,175 @@ import "./styles.css";
     // --- Data -----------------------------------------------------------------
 
     const exerciseLibrary = {
-      'Squats': {
-        muscles: { quads: 1, glutes: 0.6, core: 0.3 },
-        category: 'primary',
-        movementCategory: 'squat',
-        axialCost: 'high',  // ← Default (back/front squat)
-        hasLowerCostVariants: true,  // ← Belt squat, leg press exist
-        variants: [
-          'Back Squat',           // High
-          'Front Squat',          // High
-          'Safety Bar Squat',     // High
-          'Goblet Squat',         // Low-Moderate (lighter loads)
-          'Hack Squat',           // Low
-          'Pendulum Squat',       // Low
-          'Leg Press',            // Low
-          'Single-Leg Press',     // Low
-          'Hack Squat Machine',   // Low
-          'Belt Squat'            // Low (zero spine load)
-        ]
-      },
-      
-      'Lunges': {
-        muscles: { quads: 1, glutes: 0.8 },
-        category: 'primary',
-        movementCategory: 'squat',
-        axialCost: 'moderate',  // ← Unilateral = lower absolute load
-        hasLowerCostVariants: true,
-        variants: [
-          'Walking Lunges',         // Moderate
-          'Reverse Lunges',         // Moderate
-          'Bulgarian Split Squats', // Moderate-High
-          'Static Lunges',          // Moderate
-          'Step-ups'                // Low-Moderate
-        ]
-      },
+     'Squats': {
+  muscles: { quads: 1, glutes: 0.6, core: 0.3 },
+  category: 'primary',
+  movementCategory: 'squat',
+  axialCost: 'high',  // ← Default (back/front squat)
+  hasLowerCostVariants: true,  // ← Belt squat, leg press exist
+  variants: [
+    'Back Squat',           // High
+    'Front Squat',          // High
+    'Safety Bar Squat',     // High
+    'Goblet Squat',         // Low-Moderate (lighter loads)
+    'Hack Squat',           // Low
+    'Pendulum Squat',       // Low
+    'Leg Press',            // Low
+    'Single-Leg Press',     // Low
+    'Hack Squat Machine',   // Low
+    'Belt Squat'            // Low (zero spine load)
+  ]
+},
+
+'Lunges': {
+  muscles: { quads: 1, glutes: 0.8 },
+  category: 'primary',
+  movementCategory: 'squat',
+  axialCost: 'moderate',  // ← Unilateral = lower absolute load
+  hasLowerCostVariants: true,
+  variants: [
+    'Walking Lunges',         // Moderate
+    'Reverse Lunges',         // Moderate
+    'Bulgarian Split Squats', // Moderate-High
+    'Static Lunges',          // Moderate
+    'Step-ups'                // Low-Moderate
+  ]
+},
        
       'Deadlifts': {
-        muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'high',  // ← Primary classification
-        posteriorType: 'hinge',
-        hasLowerCostVariants: true,  // ← Trap bar is moderately cheaper
-        variants: [
-          'Conventional Deadlift',  // High
-          'Sumo Deadlift',          // High
-          'Trap Bar Deadlift',      // Moderate-High (lighter, easier)
-          'Romanian Deadlift',      // High
-          'Deficit Deadlift',       // High
-          'Block Pull'              // Moderate (partial ROM)
-        ]
-      },
-      
-      'Hip Thrusts / Bridges': {
-        muscles: { glutes: 1, hamstrings: 0.5 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'low',  // ← Perfect escape hatch
-        posteriorType: 'glute',
-        hasLowerCostVariants: false,  // Already cheap
-        variants: [
-          'Barbell Hip Thrust',
-          'Dumbbell Hip Thrust',
-          'Smith Machine Hip Thrust',
-          'Hip Thrust Machine',
-          'Single-Leg Hip Thrust',
-          'Banded Hip Thrust',
-          'Glute Bridge',
-          'Single-Leg Glute Bridge',
-          'Banded Glute Bridge',
-          'Barbell Glute Bridge'
-        ]
-      },
-      
-      'Back Extensions': {
-        muscles: { glutes: 0.8, hamstrings: 0.7, core: 0.3 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'moderate',  // ← NOT "non-axial", but cheaper than deadlifts
-        posteriorType: 'mixed',
-        hasLowerCostVariants: false,
-        variants: [
-          '45° Back Extension (Glute Focus)',
-          'Horizontal Back Extension',
-          'Reverse Hyper',
-          'Natural Glute Ham Raise'
-        ]
-      },
-      
-      'Cable Pull-Through': {
-        muscles: { glutes: 1, hamstrings: 0.6 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'low',  // ← Great escape hatch
-        posteriorType: 'glute',
-        hasLowerCostVariants: false,
-        variants: [
-          'Cable Pull-Through',
-          'Band Pull-Through',
-          'Kettlebell Swing'
-        ]
-      },
-      
-      'GHD Hip Extension': {
-        muscles: { glutes: 1, hamstrings: 0.8 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'moderate',  // ← Can hammer erectors, not "free"
-        posteriorType: 'mixed',
-        hasLowerCostVariants: false,
-        variants: [
-          'GHD Hip Extension',
-          'GHD Back Extension (Hip Focus)'
-        ]
-      },
-      
-      'Leg Curls': {
-        muscles: { hamstrings: 1 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'low',  // ← Pure isolation, minimal fatigue
-        posteriorType: 'hamstring',
-        hasLowerCostVariants: false,
-        variants: [
-          'Lying Leg Curl',
-          'Seated Leg Curl',
-          'Standing Leg Curl',
-          'Nordic Curl'
-        ]
-      },
-      
-      'Single-Leg RDL': {
-        muscles: { glutes: 1, hamstrings: 0.9, core: 0.4 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'moderate',  // ← Still a hinge, still bracing
-        posteriorType: 'hinge',
-        hasLowerCostVariants: false,
-        variants: [
-          'Dumbbell Single-Leg RDL',
-          'Kettlebell Single-Leg RDL',
-          'Barbell Single-Leg RDL',
-          'Kickstand RDL'
-        ]
-      },
-      
-      'Good Mornings': {
-        muscles: { glutes: 0.8, hamstrings: 1, core: 0.5 },
-        category: 'primary',
-        movementCategory: 'posterior',
-        axialCost: 'high',  // ← Very demanding on erectors
-        posteriorType: 'hinge',
-        hasLowerCostVariants: false,
-        variants: [
-          'Barbell Good Morning',
-          'Safety Bar Good Morning',
-          'Seated Good Morning'
-        ]
-      },
+  muscles: { glutes: 1, hamstrings: 1, upperBack: 0.6, core: 0.4 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'high',  // ← Primary classification
+  posteriorType: 'hinge',
+  hasLowerCostVariants: true,  // ← Trap bar is moderately cheaper
+  variants: [
+    'Conventional Deadlift',  // High
+    'Sumo Deadlift',          // High
+    'Trap Bar Deadlift',      // Moderate-High (lighter, easier)
+    'Romanian Deadlift',      // High
+    'Deficit Deadlift',       // High
+    'Block Pull'              // Moderate (partial ROM)
+  ]
+},
+
+'Hip Thrusts / Bridges': {
+  muscles: { glutes: 1, hamstrings: 0.5 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'low',  // ← Perfect escape hatch
+  posteriorType: 'glute',
+  hasLowerCostVariants: false,  // Already cheap
+  variants: [
+    'Barbell Hip Thrust',
+    'Dumbbell Hip Thrust',
+    'Smith Machine Hip Thrust',
+    'Hip Thrust Machine',
+    'Single-Leg Hip Thrust',
+    'Banded Hip Thrust',
+    'Glute Bridge',
+    'Single-Leg Glute Bridge',
+    'Banded Glute Bridge',
+    'Barbell Glute Bridge'
+  ]
+},
+
+'Back Extensions': {
+  muscles: { glutes: 0.8, hamstrings: 0.7, core: 0.3 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'moderate',  // ← NOT "non-axial", but cheaper than deadlifts
+  posteriorType: 'mixed',
+  hasLowerCostVariants: false,
+  variants: [
+    '45° Back Extension (Glute Focus)',
+    'Horizontal Back Extension',
+    'Reverse Hyper',
+    'Natural Glute Ham Raise'
+  ]
+},
+
+'Cable Pull-Through': {
+  muscles: { glutes: 1, hamstrings: 0.6 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'low',  // ← Great escape hatch
+  posteriorType: 'glute',
+  hasLowerCostVariants: false,
+  variants: [
+    'Cable Pull-Through',
+    'Band Pull-Through',
+    'Kettlebell Swing'
+  ]
+},
+
+'GHD Hip Extension': {
+  muscles: { glutes: 1, hamstrings: 0.8 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'moderate',  // ← Can hammer erectors, not "free"
+  posteriorType: 'mixed',
+  hasLowerCostVariants: false,
+  variants: [
+    'GHD Hip Extension',
+    'GHD Back Extension (Hip Focus)'
+  ]
+},
+
+'Leg Curls': {
+  muscles: { hamstrings: 1 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'low',  // ← Pure isolation, minimal fatigue
+  posteriorType: 'hamstring',
+  hasLowerCostVariants: false,
+  variants: [
+    'Lying Leg Curl',
+    'Seated Leg Curl',
+    'Standing Leg Curl',
+    'Nordic Curl'
+  ]
+},
+
+'Single-Leg RDL': {
+  muscles: { glutes: 1, hamstrings: 0.9, core: 0.4 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'moderate',  // ← Still a hinge, still bracing
+  posteriorType: 'hinge',
+  hasLowerCostVariants: false,
+  variants: [
+    'Dumbbell Single-Leg RDL',
+    'Kettlebell Single-Leg RDL',
+    'Barbell Single-Leg RDL',
+    'Kickstand RDL'
+  ]
+},
+
+'Good Mornings': {
+  muscles: { glutes: 0.8, hamstrings: 1, core: 0.5 },
+  category: 'primary',
+  movementCategory: 'posterior',
+  axialCost: 'high',  // ← Very demanding on erectors
+  posteriorType: 'hinge',
+  hasLowerCostVariants: false,
+  variants: [
+    'Barbell Good Morning',
+    'Safety Bar Good Morning',
+    'Seated Good Morning'
+  ]
+},
        
-     'Overhead Press': {
+    'Overhead Press': {
         muscles: { shoulders: 1, triceps: 0.7, upperBack: 0.3 },
         category: 'primary',
         movementCategory: 'press',
-        axialCost: 'low', // overall: axial load is not the limiting factor like squat/deadlift
-        hasLowerCostVariants: true, // lower bracing/stability options exist (seated/machine)
+        axialCost: 'low',  // ← Standing OHP loads spine significantly
+        hasLowerCostVariants: true,  // ← Seated/machine options exist
         variants: [
-          'Standing Barbell Overhead Press',  // higher stability/bracing demand (still low axial)
-          'Seated Dumbbell Shoulder Press',   // moderate stability/bracing demand
-          'Machine Shoulder Press'            // lowest stability/bracing demand
+          'Standing Barbell Overhead Press',  // High
+          'Seated Dumbbell Shoulder Press',   // Moderate
+          'Machine Shoulder Press'            // Low
         ]
       },
       
@@ -1001,28 +1001,13 @@ import "./styles.css";
       };
 
       const buildPrioritySessionFromTopRecs = useCallback(() => {
-        // Compute fresh to avoid temporal dead zone
         const smartRecs = getSmartRecommendations();
         const priorities = getMuscleGroupPriorities();
-        
-        // Calculate totalRemaining for session sizing
-        const totalRemaining = priorities
-          .filter(p => p.isPrimary)
-          .reduce((sum, p) => sum + p.remaining, 0);
-        
-        // FIX #1: Actually USE totalRemaining (not priorities)
-        const sessionSize = Math.min(getSessionSize(totalRemaining), 4);
-        
-        const accessoryNeeds = priorities
-          .filter(p => !p.isPrimary && p.remaining > 0)
-          .sort((a, b) => b.remaining - a.remaining)
-          .slice(0, 3);
+        const sessionSize = Math.min(getSessionSize(priorities), 4);
         
         if (!smartRecs || smartRecs.length === 0) return;
       
         const exercisesDoneThisWeek = getExercisesDoneThisWeek();
-        
-        // Prefer exercises NOT done this week
         const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
         const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
         const shuffled = [...topPool].sort(() => Math.random() - 0.5);
@@ -1033,15 +1018,12 @@ import "./styles.css";
         // ==================== AXIAL BUDGET TRACKING ====================
         
         let highAxialCount = 0;
-        let moderateAxialCount = 0;
-        
-        const MAX_HIGH_AXIAL = 1;
-        const MAX_MODERATE_AXIAL = 2;
+        const MAX_HIGH_AXIAL = 1;  // The golden rule
         
         // Helper: Get axial cost for an exercise
         const getAxialCost = (exerciseName) => {
           const ex = exerciseLibrary[exerciseName];
-          return ex?.axialCost || 'low';  // Default to low (safe)
+          return ex?.axialCost || 'moderate';  // Default to moderate if undefined
         };
         
         // Helper: Can we afford to add this exercise?
@@ -1050,54 +1032,25 @@ import "./styles.css";
           if (cost === 'high') {
             return highAxialCount < MAX_HIGH_AXIAL;
           }
-          if (cost === 'moderate') {
-            return moderateAxialCount < MAX_MODERATE_AXIAL;
-          }
-          return true;  // Low is always affordable
+          return true;  // Low and moderate are always affordable
         };
         
-        // Helper: Track axial cost when adding exercise
-        const trackAxialCost = (exerciseName) => {
-          const cost = getAxialCost(exerciseName);
-          if (cost === 'high') {
-            highAxialCount++;
-          } else if (cost === 'moderate') {
-            moderateAxialCount++;
-          }
-        };
-        
-        // FIX #4: Randomized alternative selection (prevents repetitive substitutions)
-        // Helper: Find affordable alternative for a given category
-        const findAffordableAlternative = (category) => {
-          // Try low-cost first (always affordable)
-          const lowCostCandidates = smartRecs.filter(rec => 
-            rec.movementCategory === category && 
+        // Helper: Find low-cost posterior alternative
+        const findLowCostPosterior = (recs) => {
+          return recs.find(rec => 
+            rec.movementCategory === 'posterior' && 
             getAxialCost(rec.exercise) === 'low' &&
-            !chosen.some(c => c.exercise === rec.exercise) &&
-            !usedCategories.has(category)
+            !chosen.some(c => c.exercise === rec.exercise)
           );
-          
-          if (lowCostCandidates.length > 0) {
-            // Random selection from low-cost options
-            return lowCostCandidates[Math.floor(Math.random() * lowCostCandidates.length)];
-          }
-          
-          // If no low-cost, try moderate (if we have budget)
-          if (moderateAxialCount < MAX_MODERATE_AXIAL) {
-            const moderateCostCandidates = smartRecs.filter(rec => 
-              rec.movementCategory === category && 
-              getAxialCost(rec.exercise) === 'moderate' &&
-              !chosen.some(c => c.exercise === rec.exercise) &&
-              !usedCategories.has(category)
-            );
-            
-            if (moderateCostCandidates.length > 0) {
-              // Random selection from moderate-cost options
-              return moderateCostCandidates[Math.floor(Math.random() * moderateCostCandidates.length)];
-            }
-          }
-          
-          return null;  // No affordable alternative found
+        };
+        
+        // Helper: Find moderate-cost posterior alternative  
+        const findModerateCostPosterior = (recs) => {
+          return recs.find(rec => 
+            rec.movementCategory === 'posterior' && 
+            getAxialCost(rec.exercise) === 'moderate' &&
+            !chosen.some(c => c.exercise === rec.exercise)
+          );
         };
         
         // ===============================================================
@@ -1109,65 +1062,82 @@ import "./styles.css";
           
           if (!usedCategories.has(cat)) {
             
-            // FIX #2: Generic swap logic - handles ANY budget constraint
-            // Check if we can afford this exercise
-            if (!canAffordAxialCost(rec.exercise)) {
-              // Can't afford it - try to find a cheaper alternative
-              const alternative = findAffordableAlternative(cat);
+            // ==================== SMART POSTERIOR SELECTION ====================
+            
+            // If this is posterior AND we already have high axial load
+            if (cat === 'posterior' && highAxialCount >= MAX_HIGH_AXIAL) {
+              // Try low-cost first
+              let alternative = findLowCostPosterior(shuffled);
+              
+              // If no low-cost, try moderate
+              if (!alternative) {
+                alternative = findModerateCostPosterior(shuffled);
+              }
               
               if (alternative) {
                 chosen.push(alternative);
                 usedCategories.add(cat);
-                trackAxialCost(alternative.exercise);
+                
+                // Track if we added moderate cost
+                const cost = getAxialCost(alternative.exercise);
+                if (cost === 'moderate') {
+                  // Could add moderate tracking here if needed
+                }
                 return;
               }
-              
-              // No affordable alternative found - skip this category for now
-              return;
             }
             
-            // Can afford it - add normally
-            chosen.push(rec);
-            usedCategories.add(cat);
-            trackAxialCost(rec.exercise);
+            // ==================================================================
+            
+            // Check if we can afford this exercise's axial cost
+            if (canAffordAxialCost(rec.exercise)) {
+              chosen.push(rec);
+              usedCategories.add(cat);
+              
+              // Track axial cost
+              const cost = getAxialCost(rec.exercise);
+              if (cost === 'high') {
+                highAxialCount++;
+              }
+            }
           }
         });
       
-        // FIX #3: Second pass with fallback to full smartRecs
-        // Try topPool first, then fall back to full list if needed
+        // Second pass: fill remaining slots (with same axial budget rules)
         if (chosen.length < sessionSize) {
-          // First attempt: use shuffled (topPool)
           shuffled.forEach(rec => {
             if (chosen.length >= sessionSize) return;
             if (chosen.some(c => c.exercise === rec.exercise)) return;
             
-            if (canAffordAxialCost(rec.exercise)) {
+            // For posterior in second pass, respect axial budget
+            if (rec.movementCategory === 'posterior' && highAxialCount >= MAX_HIGH_AXIAL) {
+              const cost = getAxialCost(rec.exercise);
+              // Only add if low or moderate cost
+              if (cost === 'low' || cost === 'moderate') {
+                chosen.push(rec);
+              }
+            } else if (canAffordAxialCost(rec.exercise)) {
               chosen.push(rec);
-              trackAxialCost(rec.exercise);
+              
+              const cost = getAxialCost(rec.exercise);
+              if (cost === 'high') {
+                highAxialCount++;
+              }
             }
           });
-          
-          // Second attempt: if still short, search full smartRecs
-          if (chosen.length < sessionSize) {
-            smartRecs.forEach(rec => {
-              if (chosen.length >= sessionSize) return;
-              if (chosen.some(c => c.exercise === rec.exercise)) return;
-              
-              if (canAffordAxialCost(rec.exercise)) {
-                chosen.push(rec);
-                trackAxialCost(rec.exercise);
-              }
-            });
-          }
         }
       
         if (chosen.length === 0) return;
       
-        // RANDOMIZE THE ORDER - don't always put highest priority first
         const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
       
-        // 35% chance to add an accessory finisher (only if session has room)
+        // Accessory finisher logic (unchanged)
         let finisher = null;
+        const accessoryNeeds = priorities
+          .filter(p => !p.isPrimary && p.remaining > 0)
+          .sort((a, b) => b.remaining - a.remaining)
+          .slice(0, 3);
+          
         const shouldAddFinisher =
           accessoryNeeds &&
           accessoryNeeds.length > 0 &&
@@ -1182,9 +1152,7 @@ import "./styles.css";
       
           if (accessoryCandidates.length > 0) {
             const [name, data] =
-              accessoryCandidates[
-                Math.floor(Math.random() * accessoryCandidates.length)
-              ];
+              accessoryCandidates[Math.floor(Math.random() * accessoryCandidates.length)];
       
             const primaryMuscle =
               Object.entries(data.muscles).find(([_, s]) => s === 1)?.[0] ||
@@ -1214,7 +1182,7 @@ import "./styles.css";
           tier6: tier6 || null
         });
         
-        setSessionProgress({}); // Reset progress for new session
+        setSessionProgress({});
         
         const sizeLabel = sessionSize === 2 ? 'quick finisher' : 
                           sessionSize === 3 ? 'light session' :
@@ -1225,25 +1193,20 @@ import "./styles.css";
         // ==================== SMART TOAST FEEDBACK ====================
         
         const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
-        const hasSwappedToLow = chosen.some(c => getAxialCost(c.exercise) === 'low');
-        const totalModerate = chosen.filter(c => getAxialCost(c.exercise) === 'moderate').length;
+        const hasLowPosterior = chosen.some(c => 
+          c.movementCategory === 'posterior' && 
+          getAxialCost(c.exercise) === 'low'
+        );
         
-        let toastMessage = `${sessionSize}-exercise ${sizeLabel} built from your top gaps!`;
-        
-        // If we have high axial AND swapped something to low-cost
-        if (hasHighAxial && hasSwappedToLow && (highAxialCount === MAX_HIGH_AXIAL || moderateAxialCount === MAX_MODERATE_AXIAL)) {
-          toastMessage = `${sessionSize}-exercise ${sizeLabel} - smart fatigue management 💡`;
-        } 
-        // If we have 2 moderates but no high (manageable session)
-        else if (totalModerate === 2 && !hasHighAxial) {
-          toastMessage = `${sessionSize}-exercise ${sizeLabel} - manageable spine load ✓`;
+        if (hasHighAxial && hasLowPosterior) {
+          showToast(`${sessionSize}-exercise ${sizeLabel} - smart fatigue management 💡`, 'success', '💪');
+        } else {
+          showToast(`${sessionSize}-exercise ${sizeLabel} built from your top gaps!`, 'success', '💪');
         }
         
-        showToast(toastMessage, 'success', '💪');
+        // ==============================================================
         
-        // =====================================================================
-        
-      }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek]);
+      }, [getSmartRecommendations, getMuscleGroupPriorities, getTotalRemaining, getSessionSize, showToast, getExercisesDoneThisWeek]);
              
        // Logging
          const logWorkout = useCallback((exercise, variant, sets) => {
