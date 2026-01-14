@@ -1082,7 +1082,7 @@ import "./styles.css";
         if (totalRemaining <= 20) return 4;  // Balanced session
         return 5;                             // Solid session
       }, []);
-      
+            
       const buildPrioritySessionFromTopRecs = useCallback(() => {
         const smartRecs = getSmartRecommendations();
         const priorities = getMuscleGroupPriorities();
@@ -1093,6 +1093,7 @@ import "./styles.css";
         
         const sessionSize = Math.min(getSessionSize(totalRemaining), 4);
         
+        // Calculate accessory needs ONCE at the top
         const accessoryNeeds = priorities
           .filter(p => !p.isPrimary && p.remaining > 0)
           .sort((a, b) => b.remaining - a.remaining)
@@ -1102,7 +1103,7 @@ import "./styles.css";
       
         const exercisesDoneThisWeek = getExercisesDoneThisWeek();
         
-        // NEW: Track recent posterior frequency
+        // Track recent posterior frequency
         const thisWeekWorkouts = getCurrentWeekWorkouts();
         const posteriorCount = thisWeekWorkouts.filter(w => {
           const ex = exerciseLibrary[w.exercise];
@@ -1112,7 +1113,7 @@ import "./styles.css";
         const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
         const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
         
-        // NEW: Apply squat/posterior interaction penalty BEFORE shuffling
+        // Apply squat/posterior interaction penalty BEFORE shuffling
         const adjusted = topPool.map(rec => {
           let adjustedScore = parseFloat(rec.score);
           
@@ -1141,6 +1142,7 @@ import "./styles.css";
         // Track if we've chosen a posterior exercise THIS SESSION
         let hasChosenPosteriorThisSession = false;
         
+        // Budget tracking
         let highAxialCount = 0;
         let moderateAxialCount = 0;
         let highErectorCount = 0;
@@ -1179,7 +1181,7 @@ import "./styles.css";
           
           if (erectorCost === 'high') highErectorCount++;
           
-          // NEW: Track if posterior chosen
+          // Track if posterior chosen
           const ex = exerciseLibrary[exerciseName];
           if (ex && ex.movementCategory === 'posterior') {
             hasChosenPosteriorThisSession = true;
@@ -1195,7 +1197,7 @@ import "./styles.css";
           
           if (candidates.length === 0) return null;
           
-          // NEW: Apply same squat/posterior logic to alternatives
+          // Apply same squat/posterior logic to alternatives
           const scored = candidates.map(c => {
             let score = parseFloat(c.score);
             
@@ -1271,17 +1273,12 @@ import "./styles.css";
       
         if (chosen.length === 0) return;
       
-        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5)
+        // Randomize order
+        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
       
-        // Accessory finisher logic (unchanged)
+        // Accessory finisher (35% chance)
         let finisher = null;
-        const accessoryNeeds = priorities
-          .filter(p => !p.isPrimary && p.remaining > 0)
-          .sort((a, b) => b.remaining - a.remaining)
-          .slice(0, 3);
-          
         const shouldAddFinisher =
-          accessoryNeeds &&
           accessoryNeeds.length > 0 &&
           chosen.length < 4 &&
           Math.random() < 0.35;
@@ -1332,6 +1329,22 @@ import "./styles.css";
                           sessionSize === 5 ? 'solid session' : 
                           'big session';
         
+        // Smart toast feedback
+        const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
+        const hasSwappedToLow = chosen.some(c => getAxialCost(c.exercise) === 'low');
+        const totalModerate = chosen.filter(c => getAxialCost(c.exercise) === 'moderate').length;
+        
+        let toastMessage = `${sessionSize}-exercise ${sizeLabel} built from your top gaps!`;
+        
+        if (hasHighAxial && hasSwappedToLow && (highAxialCount === MAX_HIGH_AXIAL || highErectorCount === MAX_HIGH_ERECTOR)) {
+          toastMessage = `${sessionSize}-exercise ${sizeLabel} - smart fatigue management 💡`;
+        } else if (totalModerate === 2 && !hasHighAxial) {
+          toastMessage = `${sessionSize}-exercise ${sizeLabel} - manageable load ✓`;
+        }
+        
+        showToast(toastMessage, 'success', '💪');
+        
+      }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek, getCurrentWeekWorkouts]);
         // ==================== SMART TOAST FEEDBACK ====================
         
         const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
