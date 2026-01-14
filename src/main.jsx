@@ -1345,23 +1345,7 @@ import "./styles.css";
         showToast(toastMessage, 'success', '💪');
         
       }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek, getCurrentWeekWorkouts]);
-        // ==================== SMART TOAST FEEDBACK ====================
         
-        const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
-        const hasLowPosterior = chosen.some(c => 
-          c.movementCategory === 'posterior' && 
-          getAxialCost(c.exercise) === 'low'
-        );
-        
-        if (hasHighAxial && hasLowPosterior) {
-          showToast(`${sessionSize}-exercise ${sizeLabel} - smart fatigue management 💡`, 'success', '💪');
-        } else {
-          showToast(`${sessionSize}-exercise ${sizeLabel} built from your top gaps!`, 'success', '💪');
-        }
-        
-        // ==============================================================
-        
-      }, [getSmartRecommendations, getMuscleGroupPriorities, getSessionSize, showToast, getExercisesDoneThisWeek]);
              
        // Logging
          const logWorkout = useCallback((exercise, variant, sets) => {
