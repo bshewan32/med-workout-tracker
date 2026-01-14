@@ -1083,7 +1083,7 @@ import "./styles.css";
         return 5;                             // Solid session
       }, []);
             
-      const buildPrioritySessionFromTopRecs = useCallback(() => {
+       const buildPrioritySessionFromTopRecs = useCallback(() => {
         const smartRecs = getSmartRecommendations();
         const priorities = getMuscleGroupPriorities();
         
@@ -1093,7 +1093,6 @@ import "./styles.css";
         
         const sessionSize = Math.min(getSessionSize(totalRemaining), 4);
         
-        // Calculate accessory needs ONCE at the top
         const accessoryNeeds = priorities
           .filter(p => !p.isPrimary && p.remaining > 0)
           .sort((a, b) => b.remaining - a.remaining)
@@ -1117,13 +1116,12 @@ import "./styles.css";
         const adjusted = topPool.map(rec => {
           let adjustedScore = parseFloat(rec.score);
           
-          // If posterior was already hit this week AND this is a barbell squat
           if (
             posteriorCount >= 1 &&
             rec.movementCategory === 'squat' &&
             rec.exercise === 'Squat (Barbell)'
           ) {
-            adjustedScore *= 0.8;  // 20% penalty - nudge toward lunges/spine-friendly
+            adjustedScore *= 0.8;
           }
           
           return {
@@ -1132,15 +1130,15 @@ import "./styles.css";
           };
         });
         
-        // Sort by adjusted score and shuffle top candidates
         const sorted = adjusted.sort((a, b) => b.adjustedScore - a.adjustedScore);
         const shuffled = sorted.slice(0, sessionSize + 5).sort(() => Math.random() - 0.5);
       
         const chosen = [];
         const usedCategories = new Set();
         
-        // Track if we've chosen a posterior exercise THIS SESSION
-        let hasChosenPosteriorThisSession = false;
+        // NEW: Per-session posterior quota
+        let posteriorInSession = 0;
+        const MAX_POSTERIOR_PER_SESSION = 2;
         
         // Budget tracking
         let highAxialCount = 0;
@@ -1162,8 +1160,14 @@ import "./styles.css";
         };
         
         const canAffordExercise = (exerciseName) => {
+          const ex = exerciseLibrary[exerciseName];
           const axialCost = getAxialCost(exerciseName);
           const erectorCost = getErectorCost(exerciseName);
+          
+          // NEW: Check posterior quota FIRST
+          if (ex && ex.movementCategory === 'posterior' && posteriorInSession >= MAX_POSTERIOR_PER_SESSION) {
+            return false;
+          }
           
           if (axialCost === 'high' && highAxialCount >= MAX_HIGH_AXIAL) return false;
           if (axialCost === 'moderate' && moderateAxialCount >= MAX_MODERATE_AXIAL) return false;
@@ -1173,6 +1177,7 @@ import "./styles.css";
         };
         
         const trackCosts = (exerciseName) => {
+          const ex = exerciseLibrary[exerciseName];
           const axialCost = getAxialCost(exerciseName);
           const erectorCost = getErectorCost(exerciseName);
           
@@ -1181,10 +1186,9 @@ import "./styles.css";
           
           if (erectorCost === 'high') highErectorCount++;
           
-          // Track if posterior chosen
-          const ex = exerciseLibrary[exerciseName];
+          // NEW: Track posterior count
           if (ex && ex.movementCategory === 'posterior') {
-            hasChosenPosteriorThisSession = true;
+            posteriorInSession++;
           }
         };
         
@@ -1197,13 +1201,12 @@ import "./styles.css";
           
           if (candidates.length === 0) return null;
           
-          // Apply same squat/posterior logic to alternatives
           const scored = candidates.map(c => {
             let score = parseFloat(c.score);
             
             if (
               posteriorCount >= 1 &&
-              hasChosenPosteriorThisSession &&
+              posteriorInSession > 0 &&
               category === 'squat' &&
               c.exercise === 'Squat (Barbell)'
             ) {
@@ -1273,7 +1276,6 @@ import "./styles.css";
       
         if (chosen.length === 0) return;
       
-        // Randomize order
         const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
       
         // Accessory finisher (35% chance)
@@ -1329,7 +1331,6 @@ import "./styles.css";
                           sessionSize === 5 ? 'solid session' : 
                           'big session';
         
-        // Smart toast feedback
         const hasHighAxial = chosen.some(c => getAxialCost(c.exercise) === 'high');
         const hasSwappedToLow = chosen.some(c => getAxialCost(c.exercise) === 'low');
         const totalModerate = chosen.filter(c => getAxialCost(c.exercise) === 'moderate').length;
