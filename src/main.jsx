@@ -1087,34 +1087,68 @@ import "./styles.css";
         const smartRecs = getSmartRecommendations();
         const priorities = getMuscleGroupPriorities();
         
-        // FIX: Calculate totalRemaining as SUM (not individual muscle count)
         const totalRemaining = priorities
           .filter(p => p.isPrimary)
           .reduce((sum, p) => sum + p.remaining, 0);
         
-        const sessionSize = Math.min(getSessionSize(totalRemaining), 5);
+        const sessionSize = Math.min(getSessionSize(totalRemaining), 4);
         
-           
+        const accessoryNeeds = priorities
+          .filter(p => !p.isPrimary && p.remaining > 0)
+          .sort((a, b) => b.remaining - a.remaining)
+          .slice(0, 3);
+        
         if (!smartRecs || smartRecs.length === 0) return;
       
         const exercisesDoneThisWeek = getExercisesDoneThisWeek();
+        
+        // NEW: Track recent posterior frequency
+        const thisWeekWorkouts = getCurrentWeekWorkouts();
+        const posteriorCount = thisWeekWorkouts.filter(w => {
+          const ex = exerciseLibrary[w.exercise];
+          return ex && ex.movementCategory === 'posterior';
+        }).length;
+        
         const notDoneThisWeek = smartRecs.filter(rec => !exercisesDoneThisWeek.has(rec.exercise));
         const topPool = (notDoneThisWeek.length >= sessionSize ? notDoneThisWeek : smartRecs).slice(0, sessionSize + 5);
-        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+        
+        // NEW: Apply squat/posterior interaction penalty BEFORE shuffling
+        const adjusted = topPool.map(rec => {
+          let adjustedScore = parseFloat(rec.score);
+          
+          // If posterior was already hit this week AND this is a barbell squat
+          if (
+            posteriorCount >= 1 &&
+            rec.movementCategory === 'squat' &&
+            rec.exercise === 'Squat (Barbell)'
+          ) {
+            adjustedScore *= 0.8;  // 20% penalty - nudge toward lunges/spine-friendly
+          }
+          
+          return {
+            ...rec,
+            adjustedScore
+          };
+        });
+        
+        // Sort by adjusted score and shuffle top candidates
+        const sorted = adjusted.sort((a, b) => b.adjustedScore - a.adjustedScore);
+        const shuffled = sorted.slice(0, sessionSize + 5).sort(() => Math.random() - 0.5);
       
         const chosen = [];
         const usedCategories = new Set();
         
-        // DUAL BUDGET TRACKING
+        // Track if we've chosen a posterior exercise THIS SESSION
+        let hasChosenPosteriorThisSession = false;
+        
         let highAxialCount = 0;
         let moderateAxialCount = 0;
         let highErectorCount = 0;
         
         const MAX_HIGH_AXIAL = 1;
-        const MAX_MODERATE_AXIAL = 2;  // FIX: Brought back moderate tracking
+        const MAX_MODERATE_AXIAL = 2;
         const MAX_HIGH_ERECTOR = 1;
         
-        // FIX: Default to 'low' (safe) instead of 'moderate'
         const getAxialCost = (exerciseName) => {
           const ex = exerciseLibrary[exerciseName];
           return ex?.axialCost || 'low';
@@ -1144,9 +1178,14 @@ import "./styles.css";
           else if (axialCost === 'moderate') moderateAxialCount++;
           
           if (erectorCost === 'high') highErectorCount++;
+          
+          // NEW: Track if posterior chosen
+          const ex = exerciseLibrary[exerciseName];
+          if (ex && ex.movementCategory === 'posterior') {
+            hasChosenPosteriorThisSession = true;
+          }
         };
         
-        // FIX: Generic alternative finder for ALL categories
         const findAffordableAlternative = (category) => {
           const candidates = smartRecs.filter(rec => 
             rec.movementCategory === category && 
@@ -1156,7 +1195,23 @@ import "./styles.css";
           
           if (candidates.length === 0) return null;
           
-          const lowCost = candidates.filter(c => 
+          // NEW: Apply same squat/posterior logic to alternatives
+          const scored = candidates.map(c => {
+            let score = parseFloat(c.score);
+            
+            if (
+              posteriorCount >= 1 &&
+              hasChosenPosteriorThisSession &&
+              category === 'squat' &&
+              c.exercise === 'Squat (Barbell)'
+            ) {
+              score *= 0.8;
+            }
+            
+            return { ...c, tempScore: score };
+          }).sort((a, b) => b.tempScore - a.tempScore);
+          
+          const lowCost = scored.filter(c => 
             getAxialCost(c.exercise) === 'low' && 
             getErectorCost(c.exercise) === 'low'
           );
@@ -1165,7 +1220,7 @@ import "./styles.css";
             return lowCost[Math.floor(Math.random() * lowCost.length)];
           }
           
-          return candidates[Math.floor(Math.random() * candidates.length)];
+          return scored[Math.floor(Math.random() * scored.length)];
         };
       
         // First pass: one from each movement category
@@ -1216,7 +1271,7 @@ import "./styles.css";
       
         if (chosen.length === 0) return;
       
-        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5);
+        const randomizedOrder = [...chosen].sort(() => Math.random() - 0.5)
       
         // Accessory finisher logic (unchanged)
         let finisher = null;
@@ -1941,7 +1996,7 @@ import "./styles.css";
                   </li>
                   <li className="flex gap-2">
                     <span className="font-bold min-w-[70px]">Session:</span>
-                    <span>2–4 exercises, 2–4 sets each</span>
+                    <span>3–5 exercises, 3–5 sets each</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="font-bold min-w-[70px]">Reps:</span>
@@ -1957,7 +2012,7 @@ import "./styles.css";
                   </li>
                   <li className="flex gap-2">
                     <span className="font-bold min-w-[70px]">Builder:</span>
-                    <span>Hit "Build Session" to auto-generate 3–4 exercises from your gaps (first week might repeat — it's learning your patterns!)</span>
+                    <span>Hit "Build Session" to auto-generate 3–5 exercises from your gaps (first week might repeat — it's learning your patterns!)</span>
                   </li>
                 </ul>
                 <div className="text-xs text-emerald-700 italic border-t border-emerald-200 pt-3 mt-3">
