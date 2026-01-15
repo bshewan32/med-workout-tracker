@@ -2267,7 +2267,7 @@ import "./styles.css";
                           <span className="text-lg mt-0.5">💡</span>
                           <div className="flex-1">
                             <p className="text-sm text-blue-900 leading-relaxed">
-                              <strong>Auto-builds a balanced workout</strong> from your weekly gaps (3–4 exercises). 
+                              <strong>Auto-builds a balanced workout</strong> from your weekly gaps (3–5 exercises). 
                               First week might repeat — it's learning your patterns!
                             </p>
                           </div>
@@ -2731,10 +2731,10 @@ import "./styles.css";
                 <ul className="mt-2 space-y-1.5 text-slate-700 leading-relaxed ml-4 list-disc">
                   <li>
                     <strong>Follow the priorities:</strong> on the main page, open the categories and pick the <strong>higher numbers</strong> first
-                    (the stuff you're most behind on this week).
+                    (the stuff you're most behind on this week). Select from each of the 4 categories and add accessories if you wish.
                   </li>
                   <li>
-                    <strong>Use the Session Builder:</strong> on the main page, hit <strong>Build Session</strong> and it'll auto-pick 3–4 exercises that
+                    <strong>Use the Session Builder:</strong> on the main page, hit <strong>Build Session</strong> and it'll auto-pick 3–5 exercises that
                     close your gaps.
                   </li>
                   <li>
